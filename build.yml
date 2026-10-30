@@ -1,0 +1,153 @@
+name: LingoPlay
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Üç uygulamayı da bu tek dosya derliyor. İşler birbirinden bağımsız:
+# biri hata verse diğerleri yine de çıktı üretir.
+
+jobs:
+  # ------------------------------------------------ telefon uygulaması (APK)
+  telefon:
+    name: Telefon APK
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Kaynagi ac
+        shell: bash
+        run: |
+          set -e
+          ZIP=$(git log --name-only --pretty=format: -n 50 \
+                | grep -iE '\.zip$' | grep -iE 'lingoplay|altyazi' | head -n 1 || true)
+          if [ -z "$ZIP" ] || [ ! -f "$ZIP" ]; then
+            ZIP=$(ls -t *.zip 2>/dev/null | head -n 1)
+          fi
+          echo "Kaynak: $ZIP"
+          rm -rf kaynak && mkdir kaynak
+          unzip -q "$ZIP" -d kaynak
+          ls kaynak
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 8.7
+
+      - name: Derle
+        working-directory: kaynak
+        run: gradle assembleDebug --no-daemon --stacktrace
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: 1-Telefon-APK-${{ github.run_number }}
+          path: kaynak/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+
+  # --------------------------------------------------- bilgisayar uygulaması
+  bilgisayar:
+    name: Bilgisayar EXE
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Kaynagi ac
+        shell: bash
+        run: |
+          set -e
+          ZIP=$(git log --name-only --pretty=format: -n 50 \
+                | grep -iE '\.zip$' | grep -iE 'lingoplay|altyazi' | head -n 1 || true)
+          if [ -z "$ZIP" ] || [ ! -f "$ZIP" ]; then
+            ZIP=$(ls -t *.zip 2>/dev/null | head -n 1)
+          fi
+          echo "Kaynak: $ZIP"
+          rm -rf kaynak && mkdir kaynak
+          unzip -q "$ZIP" -d kaynak
+          ls kaynak/pc
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Bagimliliklar
+        run: pip install pyinstaller mss numpy rapidocr-onnxruntime
+
+      - name: Derle
+        run: >
+          pyinstaller --onefile --noconsole --name LingoPlay
+          --collect-all rapidocr_onnxruntime
+          --collect-all onnxruntime
+          kaynak/pc/lingoplay_pc.py
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: 2-Bilgisayar-EXE-${{ github.run_number }}
+          path: dist/LingoPlay.exe
+          if-no-files-found: error
+
+  # -------------------------------------- kendi Remote Play uygulamamız (APK)
+  remote:
+    name: Remote APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Kaynagi ac
+        shell: bash
+        run: |
+          set -e
+          ZIP=$(git log --name-only --pretty=format: -n 50 \
+                | grep -iE '\.zip$' | grep -iE 'lingoplay|altyazi' | head -n 1 || true)
+          if [ -z "$ZIP" ] || [ ! -f "$ZIP" ]; then
+            ZIP=$(ls -t *.zip 2>/dev/null | head -n 1)
+          fi
+          echo "Kaynak: $ZIP"
+          rm -rf kaynak && mkdir kaynak
+          unzip -q "$ZIP" -d kaynak
+          ls kaynak/remote
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: NDK kur
+        run: |
+          set -e
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" \
+            "ndk;28.2.13676358" "cmake;3.22.1" "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Chiaki kaynagini al ve yamala
+        run: bash kaynak/remote/uygula.sh chiaki-kaynak
+
+      - name: Derle
+        working-directory: chiaki-kaynak/android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon --stacktrace
+
+      - name: APK yolunu bul
+        id: apk
+        shell: bash
+        run: |
+          YOL=$(find chiaki-kaynak/android -name "*.apk" | head -n 1)
+          echo "Bulunan APK: $YOL"
+          echo "yol=$YOL" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: 3-Remote-APK-${{ github.run_number }}
+          path: ${{ steps.apk.outputs.yol }}
+          if-no-files-found: error
