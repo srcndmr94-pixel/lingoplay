@@ -122,21 +122,32 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      - name: NDK kur
+      - name: Ortami hazirla
         run: |
-          set -e
-          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses >/dev/null || true
-          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" \
-            "ndk;28.2.13676358" "cmake;3.22.1" "platforms;android-35" "build-tools;35.0.0"
+          set -x
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
+          ls "$ANDROID_HOME" || true
+          ls "$ANDROID_HOME/cmdline-tools" || true
+          # Lisanslari kabul et; NDK ve CMake'i Gradle kendisi indirecek.
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null 2>&1 || true
+          echo "lisanslar tamam"
 
       - name: Chiaki kaynagini al ve yamala
-        run: bash kaynak/remote/uygula.sh chiaki-kaynak
+        run: |
+          set -x
+          bash kaynak/remote/uygula.sh chiaki-kaynak
+          echo "--- yamali dosyalar ---"
+          grep -n "applicationId\|versionName\|ndkVersion" chiaki-kaynak/android/app/build.gradle | head
+          grep -n "app_name" chiaki-kaynak/android/app/src/main/res/values/strings.xml
 
       - name: Derle
         working-directory: chiaki-kaynak/android
         run: |
+          set -x
           chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon --stacktrace
+          # Gradle gerekli NDK ve CMake surumunu kendisi indirir.
+          ./gradlew assembleDebug --no-daemon --stacktrace --info 2>&1 | tail -n 300
 
       - name: APK yolunu bul
         id: apk
