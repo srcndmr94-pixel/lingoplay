@@ -144,16 +144,37 @@ jobs:
       - name: Derle
         working-directory: chiaki-kaynak/android
         run: |
-          set -x
           chmod +x gradlew
           # Gradle gerekli NDK ve CMake surumunu kendisi indirir.
-          ./gradlew assembleDebug --no-daemon --stacktrace --info 2>&1 | tail -n 300
+          set +e
+          ./gradlew assembleDebug --no-daemon --stacktrace > derle.log 2>&1
+          DURUM=$?
+          set -e
+          if [ "$DURUM" -ne 0 ]; then
+            echo "=========== HATANIN SEBEBI ==========="
+            sed -n '/^FAILURE:/,/^\* Try:/p' derle.log | head -n 40
+            echo "=========== DERLEYICI SATIRLARI ==========="
+            grep -iE "error:|No such file|CMake Error|ninja: |fatal" derle.log \
+              | head -n 40
+            echo "=========== SON 40 SATIR ==========="
+            tail -n 40 derle.log
+            exit 1
+          fi
+          echo "Derleme tamam."
 
       - name: APK yolunu bul
         id: apk
         shell: bash
         run: |
           YOL=$(find chiaki-kaynak/android -name "*.apk" | head -n 1)
+          if [ -z "$YOL" ]; then
+            echo "HATA: hic APK uretilmemis."
+            echo "Derleme adimi yesil gorunse bile gercekte basarisiz olmus."
+            echo "=========== DERLEME KAYDININ SONU ==========="
+            tail -n 60 chiaki-kaynak/android/derle.log 2>/dev/null \
+              || echo "derle.log bulunamadi"
+            exit 1
+          fi
           echo "Bulunan APK: $YOL"
           echo "yol=$YOL" >> "$GITHUB_OUTPUT"
 
