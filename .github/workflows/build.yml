@@ -129,9 +129,15 @@ jobs:
           echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
           ls "$ANDROID_HOME" || true
           ls "$ANDROID_HOME/cmdline-tools" || true
-          # Lisanslari kabul et; NDK ve CMake'i Gradle kendisi indirecek.
           yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null 2>&1 || true
           echo "lisanslar tamam"
+          # Chiaki'nin istedigi tam surumler; Gradle'in kendi indirmesine
+          # guvenmek yerine burada acikca kuruyoruz.
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" \
+            "ndk;28.2.13676358" "cmake;3.22.1" "platforms;android-35" \
+            > kurulum.log 2>&1 || { tail -n 20 kurulum.log; exit 1; }
+          echo "NDK ve CMake kuruldu:"
+          ls "$ANDROID_HOME/ndk" "$ANDROID_HOME/cmake"
 
       - name: Chiaki kaynagini al ve yamala
         run: |
@@ -161,6 +167,22 @@ jobs:
             exit 1
           fi
           echo "Derleme tamam."
+
+      # Derleme dusse de kayit her zaman indirilebilir olsun.
+      - name: Kaydi topla
+        if: always()
+        run: |
+          mkdir -p kayit
+          cp chiaki-kaynak/android/derle.log kayit/ 2>/dev/null || true
+          cp kurulum.log kayit/ 2>/dev/null || true
+          ls -la kayit || true
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: 4-Remote-KAYIT-${{ github.run_number }}
+          path: kayit
+          if-no-files-found: warn
 
       - name: APK yolunu bul
         id: apk
