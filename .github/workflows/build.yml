@@ -138,6 +138,16 @@ jobs:
             > kurulum.log 2>&1 || { tail -n 20 kurulum.log; exit 1; }
           echo "NDK ve CMake kuruldu:"
           ls "$ANDROID_HOME/ndk" "$ANDROID_HOME/cmake"
+          # Chiaki'nin ag protokolu kodu derleme sirasinda uretiliyor.
+          # Bunun icin protoc programi ve nanopb'nin Python esi gerekiyor
+          # (kaynak: lib/protobuf/CMakeLists.txt ve nanopb/requirements.txt).
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq protobuf-compiler
+          python3 -m pip install --break-system-packages --quiet \
+            protobuf grpcio-tools
+          echo "protoc: $(protoc --version)"
+          python3 -c "import google.protobuf, grpc_tools; \
+            print('python protobuf:', google.protobuf.__version__)"
 
       - name: Chiaki kaynagini al ve yamala
         run: |
