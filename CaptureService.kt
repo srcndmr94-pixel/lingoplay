@@ -215,7 +215,7 @@ class CaptureService : Service() {
                 fullBitmap = imageToBitmap(image)
                 if (fullBitmap != null) {
                     val cropY = (screenHeight * cachedCropTopRatio).toInt().coerceIn(0, screenHeight - 1)
-                    val cropHeight = (screenHeight * cachedCropHeightRatio).toInt().coerceAtMost(screenHeight - cropY)
+                    val cropHeight = (screenHeight * cachedCropHeightRatio).toInt().coerceAtLeast(1).coerceAtMost(screenHeight - cropY)
 
                     croppedBitmap = Bitmap.createBitmap(fullBitmap, 0, cropY, screenWidth, cropHeight)
 
@@ -274,25 +274,45 @@ class CaptureService : Service() {
         return rawText
             .replace("\r\n", " ")
             .replace("\n", " ")
+            .replace("\u2019", "'")            // kıvrık ' → düz '
+            .replace("\u2018", "'")
+            .replace("\u201C", "")             // yalnızca çift tırnaklar atılır
+            .replace("\u201D", "")
+            .replace("\"", "")
+            .replace("`", "'")
             .replace(Regex("(?i)\\bIFL\\b"), "If I")
             .replace(Regex("(?i)\\bIfl\\b"), "If I")
+            .replace(Regex("\\bl(?=')"), "I")  // l'll, l'm, l've → I'll, I'm, I've
+            .replace(Regex("\\bl\\b"), "I")
+            .replace(Regex("(?<=\\bIf\\s)[l1]\\b"), "I")
             .replace(Regex("\\s+"), " ")
             .trim()
     }
 
     /**
-     * SÜZGEÇ 1: Gerçekten ekranda gösterilecek metin mi? (HUD, Can Barı, Tuş Simgesi ve Sayaç Eleme)
+     * SÜZGEÇ 1: Gerçekten ekranda gösterilecek metin mi? (HUD, Can Barı, Tuş Simgesi, Sayaç ve Bildirim Eleme)
      */
     private fun isValidSubtitleText(text: String): Boolean {
         if (text.length < 2) return false
 
-        // En az 1 harf içermelidir (Sadece rakam/sembol olan HUD verilerini eler)
-        val letterCount = text.count { it.isLetter() }
-        if (letterCount == 0) return false
+        val visibleCount = text.count { !it.isWhitespace() }
+        if (visibleCount == 0) return false
 
-        // Rakam ve sembollerin oranı %50'den fazlaysa HUD veya göstergedir
-        val nonLetterCount = text.count { !it.isLetter() && !it.isWhitespace() }
-        if (nonLetterCount.toDouble() / text.length > 0.50) return false
+        // Sosyal medya / sistem bildirimlerini sadece kısa metinlerde (şeritlerde) engelle
+        if (visibleCount < 25) {
+            val lower = text.lowercase()
+            if (lower.contains("messenger") || lower.contains("facebook") || lower.contains("geoguessr") || lower.contains("whatsapp")) {
+                return false
+            }
+        }
+
+        // Tek harfli artıkları ("x2", "L1") ele
+        val letterCount = text.count { it.isLetter() }
+        if (letterCount < 2) return false
+
+        // Oran YALNIZCA görünür karakterler üzerinden hesaplanır
+        val nonLetterCount = visibleCount - letterCount
+        if (nonLetterCount.toDouble() / visibleCount > 0.50) return false
 
         return true
     }
@@ -447,8 +467,17 @@ class CaptureService : Service() {
         serviceScope.cancel()
         recognizer.close()
         localTranslator?.close()
+
         virtualDisplay?.release()
+        virtualDisplay = null
+
+        imageReader?.close()
+        imageReader = null
+
         mediaProjection?.stop()
-        overlayView?.let { windowManager?.removeView(it) }
+        mediaProjection = null
+
+        overlayView?.let { v -> runCatching { windowManager?.removeView(v) } }
+        overlayView = null
     }
 }

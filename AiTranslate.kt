@@ -1,5 +1,6 @@
 package com.example.subtitles
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
@@ -23,10 +24,11 @@ object AiTranslate {
         val maxAttempts = 2
 
         while (attempts < maxAttempts) {
+            var conn: HttpURLConnection? = null
             try {
                 val endpoint = "https://generativelanguage.googleapis.com/v1beta/models/$modelName:generateContent"
                 val url = URL("$endpoint?key=$apiKey")
-                val conn = url.openConnection() as HttpURLConnection
+                conn = url.openConnection() as HttpURLConnection
                 conn.requestMethod = "POST"
                 conn.setRequestProperty("Content-Type", "application/json")
                 conn.connectTimeout = 4000
@@ -91,12 +93,13 @@ object AiTranslate {
                     // Sunucu 200 OK döndü ama yanıt boş (Güvenlik filtresi vb.) -> Yerel çeviriyi korumak için hata fırlatılır
                     return@withContext Result.failure(Exception("EMPTY_RESPONSE"))
                 } else {
+                    conn.errorStream?.use { it.readBytes() }
                     when (responseCode) {
                         503 -> {
                             attempts++
                             if (attempts < maxAttempts) {
                                 delay(400)
-                                continue
+                                continue // finally bloğu çalışır, ilk conn kapatılır
                             }
                             return@withContext Result.failure(Exception("503: High Demand"))
                         }
@@ -106,12 +109,16 @@ object AiTranslate {
                         else -> return@withContext Result.failure(Exception("$responseCode: HTTP Error"))
                     }
                 }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 return@withContext Result.failure(Exception("NET_ERROR: ${e.localizedMessage}"))
+            } finally {
+                conn?.disconnect()
             }
-            attempts++
         }
 
+        // Kotlin'in dönüş türü (Result<String>) eşleşmesi için gerekli kapanış
         return@withContext Result.failure(Exception("UNKNOWN"))
     }
 }
