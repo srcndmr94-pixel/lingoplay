@@ -39,6 +39,14 @@ object AiTranslate {
                     Sen profesyonel bir oyun altyazı çevirmenisin.
                     Sana gelen metin ekran OCR taranmasıdır. Bu yüzden 'If I' kelimesi 'IFL' veya 'Ifl', 'I' harfi 'l' veya '1' olarak hatalı okunmuş olabilir.
 
+                    OYUN BAĞLAMI: Bu bir Wuxia / dövüş sanatları oyunudur (örn. Phantom Blade Zero).
+                    Aşağıdaki terimler özel isimdir, birebir çevirme:
+                    - "the Order" = Tarikat (asla "sipariş" değil)
+                    - "Sect" = Klan / Tarikat (asla "mezhep" değil)
+                    - "Perfect Transcension" = Kusursuz Yükseliş
+                    - "Sha Chi", "Qi", "Dao" = olduğu gibi bırak
+                    - Büyük harfle yazılmış iki kelimelik adlar ("Iron Fever" gibi) beceri/teknik adıdır, anlamını koruyarak çevir veya olduğu gibi bırak
+
                     GÖREVİN:
                     1. Metindeki 'IFL', 'Ifl', 'I1' gibi OCR yazım hatalarını 'If I' veya 'I' olarak düzelt.
                     2. Metnin TAMAMINI eksiksiz çevir.
@@ -90,7 +98,6 @@ object AiTranslate {
                             }
                         }
                     }
-                    // Sunucu 200 OK döndü ama yanıt boş (Güvenlik filtresi vb.) -> Yerel çeviriyi korumak için hata fırlatılır
                     return@withContext Result.failure(Exception("EMPTY_RESPONSE"))
                 } else {
                     conn.errorStream?.use { it.readBytes() }
@@ -99,7 +106,7 @@ object AiTranslate {
                             attempts++
                             if (attempts < maxAttempts) {
                                 delay(400)
-                                continue // finally bloğu çalışır, ilk conn kapatılır
+                                continue
                             }
                             return@withContext Result.failure(Exception("503: High Demand"))
                         }
@@ -118,7 +125,6 @@ object AiTranslate {
             }
         }
 
-        // Kotlin'in dönüş türü (Result<String>) eşleşmesi için gerekli kapanış
         return@withContext Result.failure(Exception("UNKNOWN"))
     }
 }

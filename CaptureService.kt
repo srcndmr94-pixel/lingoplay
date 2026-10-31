@@ -65,27 +65,22 @@ class CaptureService : Service() {
     private var screenWidth = 1080
     private var screenHeight = 1920
 
-    // Ekran titremesini önlemek için boş kare sayacı (Debounce)
     private var blankFrameCount = 0
 
-    // Sadece Gemini Çevirilerini Saklayan Max 300 Elemanlı LRU Cache
     private val cloudTranslationCache = object : LinkedHashMap<String, String>(100, 0.75f, true) {
         override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, String>?): Boolean {
             return size > 300
         }
     }
 
-    // Soğuma ve Hata Yönetimi
     private var cooldownUntil: Long = 0
-    private var currentBackoffDelayMs: Long = 15000 // 15s -> 30s -> 60s ... (max 5m)
+    private var currentBackoffDelayMs: Long = 15000
     private var isApiKeyFatalError = false
     private var lastToastMessage = ""
 
-    // SharedPreferences Ön Önbelleği (Kare başı I/O engeli)
     private var cachedCropTopRatio = 0.65f
     private var cachedCropHeightRatio = 0.30f
 
-    // Bildirim Engelleme Listesi
     private val notificationAppNames = listOf(
         "messenger", "facebook", "whatsapp", "geoguessr",
         "instagram", "telegram", "youtube", "discord", "gmail", "spotify"
@@ -238,13 +233,11 @@ class CaptureService : Service() {
                         .addOnSuccessListener { visionText ->
                             val cleanedText = cleanOcrText(visionText.text)
                             
-                            // 1. SÜZGEÇ: Ekran Çöpü / HUD Kontrolü (Görünürlük Filtresi)
                             if (isValidSubtitleText(cleanedText)) {
                                 blankFrameCount = 0
                                 handleDetectedText(cleanedText)
                             } else {
                                 blankFrameCount++
-                                // Anlık titremeleri (flicker) önlemek için 2 ardışık boş kareden sonra temizle
                                 if (blankFrameCount >= 2 && lastExtractedText.isNotEmpty()) {
                                     lastExtractedText = ""
                                     lastNormalizedText = ""
@@ -276,24 +269,40 @@ class CaptureService : Service() {
         }
     }
 
+    // Unicode diacritic cleaning to unify accented OCR artifacts like Leavé -> Leave
     private fun aksaniDuzle(s: String): String {
         val ayristirilmis = Normalizer.normalize(s, Normalizer.Form.NFD)
         return ayristirilmis.replace(Regex("\\p{Mn}+"), "")
     }
 
+    // Splits punctuation-glued words while protecting ellipses and decimals
+    private fun noktalamaAyir(s: String): String {
+        var t = s
+        t = Regex("\\.{2,}").replace(t) { "\u0001".repeat(it.value.length) }
+        t = Regex("(?<=\\d)\\.(?=\\d)").replace(t, "\u0002")
+        t = Regex("(?<=[a-z])[.,](?=[a-z])").replace(t, " ")
+        t = Regex("(?<=[a-z])([.,])(?=[A-Z])").replace(t, "$1 ")
+        return t.replace("\u0001", ".").replace("\u0002", ".")
+    }
+
+    // Cleans OCR outputs, handling punctuation gluing, typos, and pronoun contractions securely
     private fun cleanOcrText(rawText: String): String {
         if (rawText.isBlank()) return ""
         val unaccented = aksaniDuzle(rawText)
-        return unaccented
+        val punctuated = noktalamaAyir(unaccented)
+        return punctuated
             .replace("\r\n", " ")
             .replace("\n", " ")
-            .replace("\u2019", "'")            // kıvrık ' → düz '
+            .replace("\u2019", "'")
             .replace("\u2018", "'")
-            .replace("\u201C", "")             // yalnızca çift tırnaklar atılır
+            .replace("\u201C", "")
             .replace("\u201D", "")
             .replace("\"", "")
             .replace("`", "'")
-            // Zamirler ile kısaltmaları birleştir/ayır
+            .replace(Regex("(?<![A-Za-z0-9])0(?=[a-z]{2,})"), "O")   // Corrects 0ur -> Our
+            .replace(Regex("^[A-Z](?=[A-Z][a-z]{2,})"), "")          // Cleans POur -> Our
+            // Possessive attachment splitter (Sect'sfistart -> Sect's fistart) before pronouns
+            .replace(Regex("\\b([A-Z][a-z]{2,})'s(?=[a-z]{3,})"), "$1's ")
             .replace(Regex("(?i)\\b(you|we|they)\\s*'(re|ve|ll|d)\\b"), "$1'$2")
             .replace(Regex("(?i)\\b(i)\\s*'(m|ve|ll|d)\\b"), "$1'$2")
             .replace(Regex("(?i)\\b(he|she|it|that|there|who|what)\\s*'(s|ll|d|ve)\\b"), "$1'$2")
@@ -304,14 +313,15 @@ class CaptureService : Service() {
             .replace(Regex("(?i)\\byouive\\b"), "You've")
             .replace(Regex("(?i)\\bIFL\\b"), "If I")
             .replace(Regex("(?i)\\bIfl\\b"), "If I")
-            .replace(Regex("\\bl(?=')"), "I")  // l'll, l'm, l've → I'll, I'm, I've
+            .replace(Regex("\\bl(?=')"), "I")
             .replace(Regex("\\bl\\b"), "I")
             .replace(Regex("(?<=\\bIf\\s)[l1]\\b"), "I")
-            .replace("vw", "w")                // unvworthy -> unworthy
+            .replace("vw", "w")
             .replace(Regex("\\s+"), " ")
             .trim()
     }
 
+    // Detects notification popups/banners in OCR text
     private fun isNotificationBanner(text: String): Boolean {
         val sikistirilmis = text.lowercase().replace(Regex("[^a-z]"), "")
         val eslesme = notificationAppNames.count { sikistirilmis.contains(it) }
@@ -326,36 +336,34 @@ class CaptureService : Service() {
         return false
     }
 
-    /**
-     * SÜZGEÇ 1: Gerçekten ekranda gösterilecek metin mi? (HUD, Can Barı, Tuş Simgesi, Sayaç ve Bildirim Eleme)
-     */
+    // Filters out interactive game button prompts and HUD instructions
+    private fun isInputPrompt(text: String): Boolean {
+        if (Regex("\\[[^\\]]{1,12}\\]").containsMatchIn(text)) return true
+        if (Regex("(?i)\\b(press|hold|tap)\\b.{0,30}\\bto\\b").containsMatchIn(text)) return true
+        if (Regex("(?i)[+□○△✕]\\s*(to|and)\\b").containsMatchIn(text)) return true
+        return false
+    }
+
     private fun isValidSubtitleText(text: String): Boolean {
         if (text.length < 2) return false
 
         val visibleCount = text.count { !it.isWhitespace() }
         if (visibleCount == 0) return false
 
-        // Sosyal medya / bildirim şeritlerini doğrudan engelle
-        if (isNotificationBanner(text)) {
+        if (isNotificationBanner(text) || isInputPrompt(text)) {
             return false
         }
 
-        // Tek harfli artıkları ("x2", "L1") ele
         val letterCount = text.count { it.isLetter() }
         if (letterCount < 2) return false
 
-        // Oran YALNIZCA görünür karakterler üzerinden hesaplanır
         val nonLetterCount = visibleCount - letterCount
         if (nonLetterCount.toDouble() / visibleCount > 0.50) return false
 
         return true
     }
 
-    /**
-     * SÜZGEÇ 2: Gemini bulut isteği atmaya değer uzunlukta mı? (Kota Koruma Filtresi)
-     */
     private fun shouldSendToCloud(text: String): Boolean {
-        // En az 2 adet 3+ harfli kelime içermelidir. ("Run!", "Yes." gibi kısa replikler bedava yerel çeviride kalır)
         val meaningfulWords = text.split(" ").filter { word -> word.count { it.isLetter() } >= 3 }
         return meaningfulWords.size >= 2
     }
@@ -364,11 +372,12 @@ class CaptureService : Service() {
         return aksaniDuzle(text).lowercase().replace(Regex("[^a-z0-9]"), "")
     }
 
-    /** OCR titremesini aynı metin sayar: tek karakterlik fark yeni istek doğurmaz. */
+    // Adaptive Levenshtein fuzzy text deduplication threshold
     private fun ayniMetinMi(yeni: String, onceki: String): Boolean {
         if (onceki.isEmpty()) return false
         if (yeni == onceki) return true
-        val sinir = maxOf(1, minOf(yeni.length, onceki.length) / 12)
+        val enUzun = maxOf(yeni.length, onceki.length)
+        val sinir = if (enUzun >= 20) (enUzun * 0.34).toInt() else 1
         return uzaklikEnFazla(yeni, onceki, sinir)
     }
 
@@ -398,7 +407,6 @@ class CaptureService : Service() {
         lastNormalizedText = normalized
         hasCloudTranslated = false
 
-        // 1. ÖNBELLEK KONTROLÜ (Geçmiş Gemini Çevirileri)
         val cachedCloudTranslation = cloudTranslationCache[normalized]
         if (cachedCloudTranslation != null) {
             hasCloudTranslated = true
@@ -406,7 +414,6 @@ class CaptureService : Service() {
             return
         }
 
-        // 2. AŞAMA: Yerel ML Kit çevirisini ANINDA ekrana bas (Tüm geçerli metinler için bedava)
         if (isLocalTranslatorReady) {
             localTranslator?.translate(text)
                 ?.addOnSuccessListener { localTranslation ->
@@ -416,12 +423,10 @@ class CaptureService : Service() {
                 }
         }
 
-        // 3. AŞAMA: Kısa replikler için Gemini'ye boşuna kota harcama ("Run!", "Yes." vb. yerelde kalır)
         if (!shouldSendToCloud(text)) {
             return
         }
 
-        // 4. AŞAMA: Uzun replikler için Kaliteli Gemini Çevirisini Sorgula
         val now = System.currentTimeMillis()
         if (isApiKeyFatalError || now < cooldownUntil) {
             return
@@ -452,10 +457,7 @@ class CaptureService : Service() {
     private fun handleTranslationError(errorCode: String) {
         val now = System.currentTimeMillis()
         when {
-            // Güvenlik filtresine takılan satırlarda soğuma uygulanmaz; yerel çeviri ekranda tutulur
-            errorCode.contains("EMPTY_RESPONSE") -> {
-                // No cooldown triggered, subsequent lines continue normally
-            }
+            errorCode.contains("EMPTY_RESPONSE") -> {}
             errorCode.contains("401") -> {
                 isApiKeyFatalError = true
                 showSingleToast("HATA: API Anahtarı Geçersiz (401). Gemini durduruldu.")
