@@ -39,6 +39,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.nio.ByteBuffer
+import java.text.Normalizer
 import java.util.LinkedHashMap
 
 class CaptureService : Service() {
@@ -76,13 +77,19 @@ class CaptureService : Service() {
 
     // Soğuma ve Hata Yönetimi
     private var cooldownUntil: Long = 0
-    private var currentBackoffDelayMs: Long = 15000 // 15s -> 1m -> 5m
+    private var currentBackoffDelayMs: Long = 15000 // 15s -> 30s -> 60s ... (max 5m)
     private var isApiKeyFatalError = false
     private var lastToastMessage = ""
 
     // SharedPreferences Ön Önbelleği (Kare başı I/O engeli)
     private var cachedCropTopRatio = 0.65f
     private var cachedCropHeightRatio = 0.30f
+
+    // Bildirim Engelleme Listesi
+    private val notificationAppNames = listOf(
+        "messenger", "facebook", "whatsapp", "geoguessr",
+        "instagram", "telegram", "youtube", "discord", "gmail", "spotify"
+    )
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -269,9 +276,15 @@ class CaptureService : Service() {
         }
     }
 
+    private fun aksaniDuzle(s: String): String {
+        val ayristirilmis = Normalizer.normalize(s, Normalizer.Form.NFD)
+        return ayristirilmis.replace(Regex("\\p{Mn}+"), "")
+    }
+
     private fun cleanOcrText(rawText: String): String {
         if (rawText.isBlank()) return ""
-        return rawText
+        val unaccented = aksaniDuzle(rawText)
+        return unaccented
             .replace("\r\n", " ")
             .replace("\n", " ")
             .replace("\u2019", "'")            // kıvrık ' → düz '
@@ -280,13 +293,37 @@ class CaptureService : Service() {
             .replace("\u201D", "")
             .replace("\"", "")
             .replace("`", "'")
+            // Zamirler ile kısaltmaları birleştir/ayır
+            .replace(Regex("(?i)\\b(you|we|they)\\s*'(re|ve|ll|d)\\b"), "$1'$2")
+            .replace(Regex("(?i)\\b(i)\\s*'(m|ve|ll|d)\\b"), "$1'$2")
+            .replace(Regex("(?i)\\b(he|she|it|that|there|who|what)\\s*'(s|ll|d|ve)\\b"), "$1'$2")
+            .replace(Regex("(?i)\\b(you|we|they)\\s*'(re|ve|ll|d)(?=[a-z]{3,})"), "$1'$2 ")
+            .replace(Regex("(?i)\\b(i)\\s*'(m|ve|ll|d)(?=[a-z]{3,})"), "$1'$2 ")
+            .replace(Regex("(?i)\\b(he|she|it|that|there|who|what)\\s*'(ll|d|ve)(?=[a-z]{3,})"), "$1'$2 ")
+            .replace(Regex("(?i)\\byoutre\\b"), "You're")
+            .replace(Regex("(?i)\\byouive\\b"), "You've")
             .replace(Regex("(?i)\\bIFL\\b"), "If I")
             .replace(Regex("(?i)\\bIfl\\b"), "If I")
             .replace(Regex("\\bl(?=')"), "I")  // l'll, l'm, l've → I'll, I'm, I've
             .replace(Regex("\\bl\\b"), "I")
             .replace(Regex("(?<=\\bIf\\s)[l1]\\b"), "I")
+            .replace("vw", "w")                // unvworthy -> unworthy
             .replace(Regex("\\s+"), " ")
             .trim()
+    }
+
+    private fun isNotificationBanner(text: String): Boolean {
+        val sikistirilmis = text.lowercase().replace(Regex("[^a-z]"), "")
+        val eslesme = notificationAppNames.count { sikistirilmis.contains(it) }
+
+        if (eslesme >= 2) return true
+
+        if (eslesme == 1) {
+            val gorunur = text.count { !it.isWhitespace() }
+            val cumleMi = text.any { it in ".!?" }
+            return gorunur < 30 && !cumleMi
+        }
+        return false
     }
 
     /**
@@ -298,12 +335,9 @@ class CaptureService : Service() {
         val visibleCount = text.count { !it.isWhitespace() }
         if (visibleCount == 0) return false
 
-        // Sosyal medya / sistem bildirimlerini sadece kısa metinlerde (şeritlerde) engelle
-        if (visibleCount < 25) {
-            val lower = text.lowercase()
-            if (lower.contains("messenger") || lower.contains("facebook") || lower.contains("geoguessr") || lower.contains("whatsapp")) {
-                return false
-            }
+        // Sosyal medya / bildirim şeritlerini doğrudan engelle
+        if (isNotificationBanner(text)) {
+            return false
         }
 
         // Tek harfli artıkları ("x2", "L1") ele
@@ -327,12 +361,38 @@ class CaptureService : Service() {
     }
 
     private fun normalizeForMatching(text: String): String {
-        return text.lowercase().replace(Regex("[^a-z0-9]"), "")
+        return aksaniDuzle(text).lowercase().replace(Regex("[^a-z0-9]"), "")
+    }
+
+    /** OCR titremesini aynı metin sayar: tek karakterlik fark yeni istek doğurmaz. */
+    private fun ayniMetinMi(yeni: String, onceki: String): Boolean {
+        if (onceki.isEmpty()) return false
+        if (yeni == onceki) return true
+        val sinir = maxOf(1, minOf(yeni.length, onceki.length) / 12)
+        return uzaklikEnFazla(yeni, onceki, sinir)
+    }
+
+    private fun uzaklikEnFazla(a: String, b: String, sinir: Int): Boolean {
+        if (kotlin.math.abs(a.length - b.length) > sinir) return false
+        var onceki = IntArray(b.length + 1) { it }
+        for (i in 1..a.length) {
+            val simdi = IntArray(b.length + 1)
+            simdi[0] = i
+            var enIyi = i
+            for (j in 1..b.length) {
+                val bedel = if (a[i - 1] == b[j - 1]) 0 else 1
+                simdi[j] = minOf(onceki[j] + 1, simdi[j - 1] + 1, onceki[j - 1] + bedel)
+                if (simdi[j] < enIyi) enIyi = simdi[j]
+            }
+            if (enIyi > sinir) return false
+            onceki = simdi
+        }
+        return onceki[b.length] <= sinir
     }
 
     private fun handleDetectedText(text: String) {
         val normalized = normalizeForMatching(text)
-        if (normalized == lastNormalizedText) return
+        if (ayniMetinMi(normalized, lastNormalizedText)) return
 
         lastExtractedText = text
         lastNormalizedText = normalized
@@ -406,8 +466,9 @@ class CaptureService : Service() {
                 currentBackoffDelayMs = (currentBackoffDelayMs * 2).coerceAtMost(300000)
             }
             errorCode.contains("503") -> {
-                cooldownUntil = now + 15000
-                showSingleToast("Sunucu Yoğun (503). Yerel çeviriye geçildi.")
+                cooldownUntil = now + currentBackoffDelayMs
+                showSingleToast("Sunucu Yoğun (503). Soğuma: ${currentBackoffDelayMs / 1000}s")
+                currentBackoffDelayMs = (currentBackoffDelayMs * 2).coerceAtMost(300000)
             }
             else -> {
                 cooldownUntil = now + 15000
