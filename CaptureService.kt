@@ -113,7 +113,7 @@ class CaptureService : Service() {
             PixelFormat.TRANSLUCENT
         ).apply {
             gravity = Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL
-            y = 120
+            y = 100
         }
 
         windowManager?.addView(overlayView, params)
@@ -139,7 +139,7 @@ class CaptureService : Service() {
                 if (!isProcessing) {
                     captureAndProcess()
                 }
-                delay(250) // Tarama periyodu 250ms
+                delay(300)
             }
         }
     }
@@ -154,19 +154,16 @@ class CaptureService : Service() {
                 image.close()
 
                 if (bitmap != null) {
-                    // Videolar ve oyunlar için optimize edilmiş geniş altyazı alanı (Alt %40)
-                    val cropY = (screenHeight * 0.60).toInt()
-                    val cropHeight = (screenHeight * 0.38).toInt()
+                    // Ekranın alt %45'lik alanını tara
+                    val cropY = (screenHeight * 0.55).toInt()
+                    val cropHeight = (screenHeight * 0.43).toInt()
                     val croppedBitmap = Bitmap.createBitmap(bitmap, 0, cropY, screenWidth, cropHeight)
 
                     val inputImage = InputImage.fromBitmap(croppedBitmap, 0)
                     recognizer.process(inputImage)
                         .addOnSuccessListener { visionText ->
-                            val detectedText = visionText.text
-                                .replace("\n", " ")
-                                .trim()
-                            
-                            handleDetectedText(detectedText)
+                            val cleanedText = cleanOcrText(visionText.text)
+                            handleDetectedText(cleanedText)
                         }
                         .addOnFailureListener {
                             isProcessing = false
@@ -184,9 +181,19 @@ class CaptureService : Service() {
         }
     }
 
+    // OCR Metin İyileştirme ve Temizleme Fonksiyonu
+    private fun cleanOcrText(rawText: String): String {
+        if (rawText.isBlank()) return ""
+        
+        return rawText
+            .replace("\r\n", " ")
+            .replace("\n", " ")
+            .replace(Regex("\\s+"), " ") // Çift boşlukları temizle
+            .trim()
+    }
+
     private fun handleDetectedText(text: String) {
-        // Ekrandan altyazı kalktıysa ekrandaki çeviriyi temizle
-        if (text.length < 2) {
+        if (text.length < 3) {
             if (lastExtractedText.isNotEmpty()) {
                 lastExtractedText = ""
                 updateOverlayText("")
@@ -194,15 +201,13 @@ class CaptureService : Service() {
             return
         }
 
+        // Benzerlik/Aynılık kontrolü
         if (text == lastExtractedText) return
         lastExtractedText = text
 
-        // 1. Aşama: Hızlı önizleme
-        updateOverlayText("⏳ " + text)
-
-        // 2. Aşama: Claude Yapay Zeka Çevirisi
+        // Gemini Çevirisine Gönder
         serviceScope.launch {
-            val fullTranslation = AiTranslate.translateWithClaude(text, "Video/Game Content")
+            val fullTranslation = AiTranslate.translateWithClaude(text, "Wuxia / Action RPG Game")
             if (lastExtractedText == text && fullTranslation.isNotEmpty()) {
                 updateOverlayText(fullTranslation)
             }

@@ -10,28 +10,33 @@ import org.json.JSONArray
 
 object AiTranslate {
 
-    // Kendi Gemini API Anahtarınız Entegre Edildi
     private const val API_KEY = "AQ.Ab8RN6LLRxvKT1_z2zC0ODGiwXWfN1u11CHYuNUvTFnTBuRETA"
     private const val API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
 
-    suspend fun translateWithClaude(text: String, gameName: String = "PS5 Game"): String = withContext(Dispatchers.IO) {
+    suspend fun translateWithClaude(text: String, gameName: String = "RPG Game"): String = withContext(Dispatchers.IO) {
         if (text.isBlank()) return@withContext ""
-        if (API_KEY.isBlank()) {
-            return@withContext "Hata: API Key girilmedi."
-        }
+        if (API_KEY.isBlank()) return@withContext "Hata: API Key yok"
 
         try {
             val url = URL("$API_URL?key=$API_KEY")
             val conn = url.openConnection() as HttpURLConnection
             conn.requestMethod = "POST"
             conn.setRequestProperty("Content-Type", "application/json")
+            conn.connectTimeout = 5000
+            conn.readTimeout = 5000
             conn.doOutput = true
 
-            val systemPrompt = "Sen profesyonel bir oyun ve dizi/film altyazı çevirmenisin. " +
-                    "Içerik bağlamı: $gameName. " +
-                    "Verilen İngilizce altyazıyı doğal, akıcı ve bağlama uygun Türkçe altyazı olarak çevir. " +
-                    "Sadece Türkçe çeviriyi yanıt olarak ver, kesinlikle açıklama veya ek not ekleme. " +
-                    "Özel isimleri, karakter adlarını ve yer isimlerini olduğu gibi koru."
+            // Gelişmiş Sistem Yönergesi (OCR Hatalarını ve Uzun Metinleri Düzeltme)
+            val systemPrompt = """
+                Sen profesyonel bir oyun altyazı çevirmenisin. 
+                Sana gelen metin ekran OCR okuması olduğu için harf/boşluk hataları içerebilir (Örn: 'all iance' -> 'alliance', 'Man date' -> 'Mandate', 'Ifl' -> 'If I').
+                
+                GÖREVİN:
+                1. Metindeki OCR okuma hatalarını anlam kurallarına göre zihinsel olarak düzelt.
+                2. Oyun bağlamına uygun (Wuxia / Fantasy RPG / Aksiyon) doğal ve akıcı Türkçe altyazı üret.
+                3. Terimleri doğru çevir (Örn: 'Mandate' -> 'Kader/Yetki', 'Baishan Sect' -> 'Baishan Mezhebi/Tarikatı', 'Maskwalkers' -> 'Maskeliler').
+                4. Sadece Türkçe çeviriyi yanıt ver. Açıklama, not veya ek metin kesinlikle yazma.
+            """.trimIndent()
 
             val jsonBody = JSONObject().apply {
                 val systemInstruction = JSONObject().apply {
@@ -54,10 +59,10 @@ object AiTranslate {
                 put("contents", contentsArray)
             }
 
-            val writer = OutputStreamWriter(conn.outputStream)
-            writer.write(jsonBody.toString())
-            writer.flush()
-            writer.close()
+                val writer = OutputStreamWriter(conn.outputStream)
+                writer.write(jsonBody.toString())
+                writer.flush()
+                writer.close()
 
             val responseCode = conn.responseCode
             if (responseCode == HttpURLConnection.HTTP_OK) {
@@ -74,12 +79,9 @@ object AiTranslate {
                         }
                     }
                 }
-            } else {
-                return@withContext "Çeviri hatası ($responseCode)"
             }
         } catch (e: Exception) {
             e.printStackTrace()
-            return@withContext "Bağlantı hatası"
         }
 
         return@withContext ""
