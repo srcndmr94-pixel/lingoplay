@@ -28,7 +28,138 @@ object TextNormalizer {
 }
 
 // ==========================================
-// 2. SIMILARITY ENGINE
+// 2. OCR SCREEN / UI FILTER
+// ==========================================
+
+object SubtitleFilter {
+
+    // Uygulama ve sosyal medya isimleri.
+    private val appNames = setOf(
+        "facebook",
+        "messenger",
+        "instagram",
+        "whatsapp",
+        "tiktok",
+        "youtube",
+        "discord",
+        "telegram",
+        "spotify",
+        "twitter",
+        "x",
+        "geoguessr",
+        "geo guessr",
+        "google",
+        "chrome",
+        "play store",
+        "app store"
+    )
+
+    // Tek başına arayüz olarak kabul edilen ifadeler.
+    private val interfaceLabels = setOf(
+        "exit",
+        "see shop",
+        "open shop",
+        "return to menu",
+        "press any key",
+        "press to continue",
+        "loading",
+        "settings",
+        "inventory",
+        "main menu",
+        "pause menu",
+        "resume game"
+    )
+
+    // Kontrol simgesi + eylem şeklindeki OCR okumaları.
+    // "Dive" veya "Exit" kelimesi tek başına engellenmez.
+    private val controllerPrompts = setOf(
+        "x exit",
+        "x shop",
+        "o dive",
+        "o swim",
+        "o lunge",
+        "o interact",
+        "o talk",
+        "o select",
+        "o confirm",
+        "o cancel",
+        "o jump",
+        "o climb",
+        "o open",
+        "o close",
+        "o pick up",
+        "o use"
+    )
+
+    private val controllerPrefixRegex =
+        Regex("^[xo]\\s+")
+
+    fun shouldIgnore(rawText: String): Boolean {
+
+        val normalized = TextNormalizer.normalize(rawText)
+
+        if (normalized.isBlank()) return true
+
+        if (normalized in interfaceLabels) return true
+        if (normalized in controllerPrompts) return true
+
+        // Uygulama adı içeren masaüstü / sosyal medya OCR metinleri.
+        val padded = " $normalized "
+
+        if (appNames.any { name ->
+                padded.contains(" $name ")
+            }
+        ) {
+            return true
+        }
+
+        // X Exit, O Dive gibi kontrol düğmesi okumaları.
+        if (controllerPrefixRegex.containsMatchIn(normalized)) {
+            val firstWord = normalized.substringBefore(" ")
+            val rest = normalized.substringAfter(" ", "")
+
+            if (
+                firstWord == "x" &&
+                rest in setOf("exit", "shop", "select", "confirm")
+            ) {
+                return true
+            }
+
+            if (
+                firstWord == "o" &&
+                rest in setOf(
+                    "dive", "swim", "lunge", "interact",
+                    "talk", "select", "confirm", "cancel",
+                    "jump", "climb", "open", "close"
+                )
+            ) {
+                return true
+            }
+        }
+
+        // Birden fazla kontrol eylemi aynı OCR satırındaysa
+        // bunu altyazı yerine oyun arayüzü kabul et.
+        val controlWords = setOf(
+            "swim", "lunge", "dive", "jump",
+            "interact", "select", "confirm"
+        )
+
+        val words = normalized.split(" ")
+        val controlWordCount = words.count { it in controlWords }
+
+        if (
+            controlWordCount >= 2 &&
+            (words.contains("o") || words.contains("x"))
+        ) {
+            return true
+        }
+
+        return false
+    }
+}
+
+// ==========================================
+// 3. SIMILARITY ENGINE
 // Unicode-aware Banded Levenshtein
 // ==========================================
 
@@ -53,10 +184,7 @@ class SimilarityEngine(
         return result.toIntArray()
     }
 
-    fun calculateSimilarity(
-        s1: String,
-        s2: String
-    ): Double {
+    fun calculateSimilarity(s1: String, s2: String): Double {
 
         if (s1 == s2) return 1.0
 
@@ -149,7 +277,7 @@ class SimilarityEngine(
 }
 
 // ==========================================
-// 3. SUBTITLE VARIANTS
+// 4. SUBTITLE VARIANTS
 // ==========================================
 
 data class VariantRecord(
@@ -159,47 +287,35 @@ data class VariantRecord(
 )
 
 // ==========================================
-// 4. SUBTITLE CANDIDATE
+// 5. SUBTITLE CANDIDATE
 // ==========================================
 
 data class SubtitleCandidate(
-
     var rawText: String,
-
     var normalizedText: String,
-
     val firstSeenTime: Long,
-
     var lastSeenTime: Long,
-
     var hitCount: Int,
-
     val variantFrequencies:
         MutableMap<String, VariantRecord> = mutableMapOf(),
-
     var hasEmitted: Boolean = false,
-
     var lastEmittedNormalized: String? = null
 ) {
 
     fun addVariant(raw: String, now: Long) {
 
         val normalized = TextNormalizer.normalize(raw)
-
         if (normalized.isBlank()) return
 
         val existing = variantFrequencies[normalized]
 
         if (existing == null) {
-
             variantFrequencies[normalized] = VariantRecord(
                 rawText = raw,
                 frequency = 1,
                 lastSeenTime = now
             )
-
         } else {
-
             existing.frequency++
             existing.lastSeenTime = now
 
@@ -226,14 +342,11 @@ data class SubtitleCandidate(
         allowSingleSightExtension: Boolean = false
     ): String {
 
-        if (variantFrequencies.isEmpty()) {
-            return rawText
-        }
+        if (variantFrequencies.isEmpty()) return rawText
 
-        val repeatedVariants =
-            variantFrequencies.entries.filter {
-                it.value.frequency >= 2
-            }
+        val repeatedVariants = variantFrequencies.entries.filter {
+            it.value.frequency >= 2
+        }
 
         val reliableVariants =
             if (repeatedVariants.isNotEmpty()) {
@@ -261,34 +374,32 @@ data class SubtitleCandidate(
                 reliableVariants
             }
 
-        val extensions = extensionPool.filter { candidate ->
-
-            candidate.key.length > baseKey.length &&
-                candidate.key.startsWith(baseKey) &&
-                candidate.key[baseKey.length] == ' ' &&
-                (
-                    allowSingleSightExtension ||
-                    candidate.value.frequency >= 2
-                )
-        }
-
-        val bestExtension = extensions.maxWithOrNull(
-            compareBy<Map.Entry<String, VariantRecord>> {
-                it.value.frequency
-            }.thenBy {
-                it.key.length
-            }.thenBy {
-                it.value.lastSeenTime
+        val bestExtension = extensionPool
+            .filter { candidate ->
+                candidate.key.length > baseKey.length &&
+                    candidate.key.startsWith(baseKey) &&
+                    candidate.key[baseKey.length] == ' ' &&
+                    (
+                        allowSingleSightExtension ||
+                            candidate.value.frequency >= 2
+                        )
             }
-        )
+            .maxWithOrNull(
+                compareBy<Map.Entry<String, VariantRecord>> {
+                    it.value.frequency
+                }.thenBy {
+                    it.key.length
+                }.thenBy {
+                    it.value.lastSeenTime
+                }
+            )
 
         return (bestExtension ?: base).value.rawText
     }
 }
 
 // ==========================================
-// 5. EMISSION CACHE
-// TTL + LRU
+// 6. EMISSION CACHE - TTL + LRU
 // ==========================================
 
 class EmissionCache(
@@ -305,30 +416,19 @@ class EmissionCache(
         LinkedHashMap<String, Long>(maxSize, 0.75f, true)
 
     @Synchronized
-    fun contains(
-        normalizedText: String,
-        now: Long
-    ): Boolean {
-
+    fun contains(normalizedText: String, now: Long): Boolean {
         prune(now)
-
         return cache.containsKey(normalizedText)
     }
 
     @Synchronized
-    fun put(
-        normalizedText: String,
-        now: Long
-    ) {
+    fun put(normalizedText: String, now: Long) {
 
         prune(now)
-
         cache[normalizedText] = now
 
         while (cache.size > maxSize) {
-
             val oldestKey = cache.keys.iterator().next()
-
             cache.remove(oldestKey)
         }
     }
@@ -339,7 +439,6 @@ class EmissionCache(
         val iterator = cache.entries.iterator()
 
         while (iterator.hasNext()) {
-
             val entry = iterator.next()
 
             if (now - entry.value >= ttlMillis) {
@@ -350,27 +449,19 @@ class EmissionCache(
 }
 
 // ==========================================
-// 6. FRAGMENT MERGER V10
+// 7. FRAGMENT MERGER
 // ==========================================
 
 class FragmentMerger(
 
     private val minConsecutiveMatches: Int = 3,
-
     private val minStabilityMillis: Long = 400L,
-
     private val maxWaitMillis: Long = 1500L,
-
     private val maxInactivityMillis: Long = 1000L,
-
     private val similarityThreshold: Double = 0.85,
-
     emissionCacheTtlMillis: Long = 10000L,
-
     maxCacheSize: Int = 100,
-
     private val emptyGracePeriodMillis: Long = 500L,
-
     private val clock: () -> Long = {
         SystemClock.elapsedRealtime()
     }
@@ -387,25 +478,18 @@ class FragmentMerger(
     }
 
     private var currentCandidate: SubtitleCandidate? = null
-
-    private var pendingAlternativeCandidate:
-        SubtitleCandidate? = null
-
+    private var pendingAlternativeCandidate: SubtitleCandidate? = null
     private var emptySinceTimestamp: Long = -1L
 
     private val similarityEngine =
         SimilarityEngine(similarityThreshold)
 
     private val emissionCache =
-        EmissionCache(
-            emissionCacheTtlMillis,
-            maxCacheSize
-        )
+        EmissionCache(emissionCacheTtlMillis, maxCacheSize)
 
     private val lock = Any()
 
     sealed class MergerResult {
-
         object Pending : MergerResult()
 
         data class Stable(
@@ -418,253 +502,197 @@ class FragmentMerger(
     // MAIN OCR INPUT
     // ==========================================
 
-    fun processRawOcr(
-        rawText: String
-    ): MergerResult = synchronized(lock) {
+    fun processRawOcr(rawText: String): MergerResult =
+        synchronized(lock) {
 
-        val now = clock()
+            val now = clock()
+            val trimmedRaw = rawText.trim()
 
-        val trimmedRaw = rawText.trim()
-
-        val cleaned = TextNormalizer.normalize(trimmedRaw)
-
-        // EMPTY OCR
-
-        if (cleaned.isBlank()) {
-
-            val current = currentCandidate
-
-            if (current != null) {
-
-                if (emptySinceTimestamp == -1L) {
-                    emptySinceTimestamp = now
-                }
-
-                if (
-                    now - emptySinceTimestamp >=
-                    emptyGracePeriodMillis
-                ) {
-
-                    val result = finalizeCandidate(
-                        current,
-                        now
-                    )
-
-                    resetStateInternal()
-
-                    return@synchronized result
-                }
-            }
-
-            return@synchronized MergerResult.Pending
-        }
-
-        emptySinceTimestamp = -1L
-
-        // NO ACTIVE CANDIDATE
-
-        val current = currentCandidate
-
-        if (current == null) {
-
-            val alternative = pendingAlternativeCandidate
-
-            if (alternative != null) {
-
-                alternative.observe(trimmedRaw, now)
-
-                currentCandidate = alternative
-                pendingAlternativeCandidate = null
-
-                if (isValidForEmission(alternative)) {
-                    return@synchronized emitCandidate(
-                        alternative,
-                        now
-                    )
-                }
-
+            // Arayüz / uygulama metinlerini birleştiriciye alma.
+            // Filtrelenen metin boş OCR olarak değerlendirilmez.
+            if (SubtitleFilter.shouldIgnore(trimmedRaw)) {
                 return@synchronized MergerResult.Pending
             }
 
-            initCandidate(
-                trimmedRaw,
-                cleaned,
-                now
-            )
+            val cleaned = TextNormalizer.normalize(trimmedRaw)
 
-            return@synchronized MergerResult.Pending
-        }
-
-        // CURRENT CANDIDATE COMPARISON
-
-        val similarity = similarityEngine.calculateSimilarity(
-            current.normalizedText,
-            cleaned
-        )
-
-        if (
-            isExtensionOrSimilar(
-                current.normalizedText,
-                cleaned,
-                similarity
-            )
-        ) {
-
-            current.observe(trimmedRaw, now)
-
-            // Current candidate yeniden görüldüğü için
-            // bekleyen alternatif geçerliliğini kaybeder.
-
-            pendingAlternativeCandidate = null
-
-            if (isValidForEmission(current)) {
-                return@synchronized emitCandidate(
-                    current,
-                    now
-                )
+            if (cleaned.isBlank()) {
+                return@synchronized handleEmptyOcr(now)
             }
 
-            return@synchronized MergerResult.Pending
-        }
+            emptySinceTimestamp = -1L
 
-        // ALTERNATIVE CANDIDATE
+            val current = currentCandidate
 
-        var alternative = pendingAlternativeCandidate
+            if (current == null) {
 
-        if (alternative != null) {
+                val alternative = pendingAlternativeCandidate
 
-            val altSimilarity =
-                similarityEngine.calculateSimilarity(
-                    alternative.normalizedText,
-                    cleaned
-                )
+                if (alternative != null) {
+                    alternative.observe(trimmedRaw, now)
+                    currentCandidate = alternative
+                    pendingAlternativeCandidate = null
 
-            if (
-                isExtensionOrSimilar(
-                    alternative.normalizedText,
-                    cleaned,
-                    altSimilarity
-                )
-            ) {
+                    return@synchronized emitIfReady(alternative, now)
+                }
 
-                alternative.observe(trimmedRaw, now)
-
-            } else {
-
-                alternative = createCandidate(
+                currentCandidate = createCandidate(
                     trimmedRaw,
                     cleaned,
                     now
                 )
 
+                return@synchronized MergerResult.Pending
+            }
+
+            val similarity = similarityEngine.calculateSimilarity(
+                current.normalizedText,
+                cleaned
+            )
+
+            if (
+                isExtensionOrSimilar(
+                    current.normalizedText,
+                    cleaned,
+                    similarity
+                )
+            ) {
+                current.observe(trimmedRaw, now)
+
+                // Eski aday tekrar görüldüyse alternatif artık
+                // ardışık bir altyazı olarak kabul edilmez.
+                pendingAlternativeCandidate = null
+
+                return@synchronized emitIfReady(current, now)
+            }
+
+            // Gelen metin mevcut adaydan farklı.
+            // Önce alternatif adayla karşılaştır.
+            var alternative = pendingAlternativeCandidate
+
+            if (alternative != null) {
+
+                val altSimilarity =
+                    similarityEngine.calculateSimilarity(
+                        alternative.normalizedText,
+                        cleaned
+                    )
+
+                if (
+                    isExtensionOrSimilar(
+                        alternative.normalizedText,
+                        cleaned,
+                        altSimilarity
+                    )
+                ) {
+                    alternative.observe(trimmedRaw, now)
+                } else {
+                    alternative = createCandidate(
+                        trimmedRaw,
+                        cleaned,
+                        now
+                    )
+                    pendingAlternativeCandidate = alternative
+                }
+
+            } else {
+                alternative = createCandidate(
+                    trimmedRaw,
+                    cleaned,
+                    now
+                )
                 pendingAlternativeCandidate = alternative
             }
 
-        } else {
+            // Alternatif yeterince kararlı hale geldiyse
+            // eski adayı sonuçlandır ve alternatifi etkinleştir.
+            if (isValidForEmission(alternative)) {
 
-            alternative = createCandidate(
-                trimmedRaw,
-                cleaned,
-                now
-            )
+                val oldResult = finalizeCandidate(current, now)
 
-            pendingAlternativeCandidate = alternative
+                currentCandidate = alternative
+                pendingAlternativeCandidate = null
+                emptySinceTimestamp = -1L
+
+                // Tek çağrıda tek sonuç döndürüldüğü için
+                // eski adayın sonucu önceliklidir.
+                // Yeni aday sonraki OCR/flush çağrısında yayınlanır.
+                return@synchronized oldResult
+            }
+
+            MergerResult.Pending
         }
 
-        // ALTERNATIVE STABILITY
+    // ==========================================
+    // EMPTY OCR HANDLING
+    // ==========================================
 
-        if (isValidForEmission(alternative)) {
+    private fun handleEmptyOcr(now: Long): MergerResult {
 
-            val result = finalizeCandidate(
-                current,
-                now
-            )
-
-            // Alternatif aday doğrulandı.
-            // Eski adayın sonucu döndürülür.
-            // Yeni aday sonraki karelerde aktif olur.
-
-            currentCandidate = alternative
-            pendingAlternativeCandidate = null
-            emptySinceTimestamp = -1L
-
-            return@synchronized result
+        if (currentCandidate == null) {
+            return MergerResult.Pending
         }
 
-        MergerResult.Pending
+        if (emptySinceTimestamp == -1L) {
+            emptySinceTimestamp = now
+        }
+
+        if (now - emptySinceTimestamp < emptyGracePeriodMillis) {
+            return MergerResult.Pending
+        }
+
+        val current = currentCandidate
+        val result = finalizeCandidate(current, now)
+
+        // Alternatif adayı silmek yerine sıradaki aday yap.
+        currentCandidate = pendingAlternativeCandidate
+        pendingAlternativeCandidate = null
+        emptySinceTimestamp = -1L
+
+        return result
     }
 
     // ==========================================
-    // FLUSH
+    // FLUSH / TIMEOUT
     // ==========================================
 
     fun flush(): MergerResult = synchronized(lock) {
 
         val now = clock()
-
         val current = currentCandidate
             ?: return@synchronized MergerResult.Pending
 
         val emptyElapsed =
             emptySinceTimestamp != -1L &&
-                now - emptySinceTimestamp >=
-                emptyGracePeriodMillis
+                now - emptySinceTimestamp >= emptyGracePeriodMillis
 
-        if (emptyElapsed) {
-
-            val result = finalizeCandidate(
-                current,
-                now
-            )
-
-            resetStateInternal()
-
-            return@synchronized result
-        }
+        val inactivityExceeded =
+            now - current.lastSeenTime >= maxInactivityMillis
 
         val totalLifeExceeded =
             !current.hasEmitted &&
                 now - current.firstSeenTime >= maxWaitMillis
 
-        val inactivityExceeded =
-            now - current.lastSeenTime >= maxInactivityMillis
-
-        if (!totalLifeExceeded && !inactivityExceeded) {
+        if (!emptyElapsed && !inactivityExceeded && !totalLifeExceeded) {
             return@synchronized MergerResult.Pending
         }
 
         val enoughHits =
             current.hitCount >= minConsecutiveMatches
 
-        // Max wait doldu ancak yeterli OCR okuması yok.
-        // Yeni karelerin gelmesine izin ver.
-
-        if (
-            totalLifeExceeded &&
-            !inactivityExceeded &&
-            !enoughHits
-        ) {
-            return@synchronized MergerResult.Pending
-        }
-
-        val result = if (enoughHits) {
-
-            finalizeCandidate(
+        val result = when {
+            enoughHits -> finalizeCandidate(
                 current,
                 now,
-                forceTimeValidation = true
+                forceTimeValidation = totalLifeExceeded || inactivityExceeded || emptyElapsed
             )
 
-        } else {
-
-            MergerResult.Pending
+            else -> MergerResult.Pending
         }
 
-        // Timeout sonrasında alternatif aday korunur.
-
-        val successor = pendingAlternativeCandidate
-
-        currentCandidate = successor
+        // Adayı yalnızca gerçekten sonlandırma koşulu
+        // oluştuğunda kapat. Bekleyen alternatif korunur.
+        currentCandidate = pendingAlternativeCandidate
         pendingAlternativeCandidate = null
         emptySinceTimestamp = -1L
 
@@ -672,7 +700,7 @@ class FragmentMerger(
     }
 
     // ==========================================
-    // CANDIDATE VALIDATION
+    // EMISSION VALIDATION
     // ==========================================
 
     private fun isValidForEmission(
@@ -689,6 +717,18 @@ class FragmentMerger(
         return stableEnough && timeEnough
     }
 
+    private fun emitIfReady(
+        candidate: SubtitleCandidate,
+        now: Long
+    ): MergerResult {
+
+        return if (isValidForEmission(candidate)) {
+            emitCandidate(candidate, now)
+        } else {
+            MergerResult.Pending
+        }
+    }
+
     // ==========================================
     // EMISSION
     // ==========================================
@@ -701,159 +741,4 @@ class FragmentMerger(
 
         val text = candidate.getBestVariantText(
             allowSingleSightExtension
-        )
-
-        val normalized = TextNormalizer.normalize(text)
-
-        if (normalized.isBlank()) {
-            return MergerResult.Pending
-        }
-
-        // Aynı sürümü tekrar yayınlama.
-
-        if (normalized == candidate.lastEmittedNormalized) {
-            return MergerResult.Pending
-        }
-
-        val isUpdate = candidate.hasEmitted
-
-        // Cache yalnızca yeni altyazılar için kullanılır.
-
-        if (
-            !isUpdate &&
-            emissionCache.contains(normalized, now)
-        ) {
-            return MergerResult.Pending
-        }
-
-        if (!isUpdate) {
-            emissionCache.put(normalized, now)
-        }
-
-        candidate.hasEmitted = true
-        candidate.lastEmittedNormalized = normalized
-
-        return MergerResult.Stable(
-            text = text,
-            isUpdate = isUpdate
-        )
-    }
-
-    // ==========================================
-    // FINALIZE
-    // ==========================================
-
-    private fun finalizeCandidate(
-        candidate: SubtitleCandidate,
-        now: Long,
-        forceTimeValidation: Boolean = false
-    ): MergerResult {
-
-        val valid = isValidForEmission(candidate)
-
-        if (!valid) {
-
-            val enoughHits =
-                candidate.hitCount >= minConsecutiveMatches
-
-            if (!forceTimeValidation || !enoughHits) {
-                return MergerResult.Pending
-            }
-        }
-
-        return emitCandidate(
-            candidate,
-            now,
-            allowSingleSightExtension = true
-        )
-    }
-
-    // ==========================================
-    // INIT / RESET
-    // ==========================================
-
-    private fun createCandidate(
-        raw: String,
-        normalized: String,
-        now: Long
-    ): SubtitleCandidate {
-
-        val candidate = SubtitleCandidate(
-            rawText = raw,
-            normalizedText = normalized,
-            firstSeenTime = now,
-            lastSeenTime = now,
-            hitCount = 1
-        )
-
-        candidate.addVariant(raw, now)
-
-        return candidate
-    }
-
-    private fun initCandidate(
-        raw: String,
-        normalized: String,
-        now: Long
-    ) {
-
-        currentCandidate = createCandidate(
-            raw,
-            normalized,
-            now
-        )
-
-        pendingAlternativeCandidate = null
-        emptySinceTimestamp = -1L
-    }
-
-    private fun resetStateInternal() {
-
-        currentCandidate = null
-        pendingAlternativeCandidate = null
-        emptySinceTimestamp = -1L
-    }
-
-    // ==========================================
-    // SIMILARITY / EXTENSION
-    // ==========================================
-
-    private fun isWordBoundaryExtension(
-        shorter: String,
-        longer: String
-    ): Boolean {
-
-        if (shorter.isBlank() || longer.isBlank()) {
-            return false
-        }
-
-        if (longer.length <= shorter.length) {
-            return false
-        }
-
-        if (!longer.startsWith(shorter)) {
-            return false
-        }
-
-        return longer[shorter.length] == ' '
-    }
-
-    private fun isExtensionOrSimilar(
-        existing: String,
-        incoming: String,
-        similarity: Double
-    ): Boolean {
-
-        if (existing == incoming) {
-            return true
-        }
-
-        if (similarity >= similarityThreshold) {
-            return true
-        }
-
-        if (
-            isWordBoundaryExtension(
-                existing,
-                incoming
    
