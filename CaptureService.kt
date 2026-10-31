@@ -101,6 +101,14 @@ class CaptureService : Service() {
         "apply", "reset", "filter", "sort"
     )
 
+    // Tuş şeridinde geçen eylem adları (L3 Lunge / Swim Up / Dive)
+    private val buttonActionWords = setOf(
+        "swim", "dive", "lunge", "jump", "dodge", "sprint", "crouch", "interact",
+        "attack", "block", "parry", "aim", "reload", "climb", "vault", "grapple",
+        "mount", "dismount", "loot", "sheathe", "whistle", "revive", "stealth",
+        "counter", "grab", "throw", "drink"
+    )
+
     // Türkçeye özgü harfler: zaten Türkçe olan metni yeniden çevirmemek için
     private val turkishChars = "ışğüöçİŞĞÜÖÇ".toSet()
     private val turkishWords = setOf(
@@ -424,6 +432,19 @@ class CaptureService : Service() {
         // Simge jetonları: (x) (X) (o) ve OCR'ın simgeden ürettiği )) / oo artıkları
         if (Regex("\\(\\s*[xXoO+]\\s*\\)").containsMatchIn(text)) return true
         if (Regex("(?:^|\\s)(?:\\)\\)|oo)(?=\\s)").containsMatchIn(text)) return true
+        // Kumanda tuş adları: L1 L2 L3 R1 R2 R3 LB RB LT RT
+        if (Regex("(?<![A-Za-z])(?:[LR][123]|LB|RB|LT|RT)(?![A-Za-z])").containsMatchIn(text)) return true
+        // PlayStation / Xbox tuş simgeleri
+        if (Regex("[✕✖○◯◉△▲□■⊗⊙]").containsMatchIn(text)) return true
+        // Kapanış parantezli yalın tuş harfi: "X) Swim Up", "o) Dive"
+        if (Regex("(?<![A-Za-z])[XxOo]\\s*\\)").containsMatchIn(text)) return true
+        // İki veya daha fazla tuş eylemi yan yana ve cümle noktalaması yok.
+        // Noktalama şartı, "I'll swim across at dawn." gibi gerçek replikleri korur.
+        if (text.none { it in ".!?…" }) {
+            val eylemSayisi = Regex("[A-Za-z]+").findAll(text)
+                .count { it.value.lowercase() in buttonActionWords }
+            if (eylemSayisi >= 2) return true
+        }
         return false
     }
 
