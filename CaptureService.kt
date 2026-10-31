@@ -154,9 +154,9 @@ class CaptureService : Service() {
                 image.close()
 
                 if (bitmap != null) {
-                    // Ekranın alt %45'lik alanını tara
-                    val cropY = (screenHeight * 0.55).toInt()
-                    val cropHeight = (screenHeight * 0.43).toInt()
+                    // Ekranın alt %40'lık alanını daha hassas tara
+                    val cropY = (screenHeight * 0.60).toInt()
+                    val cropHeight = (screenHeight * 0.38).toInt()
                     val croppedBitmap = Bitmap.createBitmap(bitmap, 0, cropY, screenWidth, cropHeight)
 
                     val inputImage = InputImage.fromBitmap(croppedBitmap, 0)
@@ -181,15 +181,18 @@ class CaptureService : Service() {
         }
     }
 
-    // OCR Metin İyileştirme ve Temizleme Fonksiyonu
     private fun cleanOcrText(rawText: String): String {
         if (rawText.isBlank()) return ""
         
-        return rawText
+        var cleaned = rawText
             .replace("\r\n", " ")
             .replace("\n", " ")
-            .replace(Regex("\\s+"), " ") // Çift boşlukları temizle
+            .replace(Regex("^IFL\\b", RegexOption.IGNORE_CASE), "If I")
+            .replace(Regex("^Ifl\\b"), "If I")
+            .replace(Regex("\\s+"), " ")
             .trim()
+
+        return cleaned
     }
 
     private fun handleDetectedText(text: String) {
@@ -201,11 +204,9 @@ class CaptureService : Service() {
             return
         }
 
-        // Benzerlik/Aynılık kontrolü
         if (text == lastExtractedText) return
         lastExtractedText = text
 
-        // Gemini Çevirisine Gönder
         serviceScope.launch {
             val fullTranslation = AiTranslate.translateWithClaude(text, "Wuxia / Action RPG Game")
             if (lastExtractedText == text && fullTranslation.isNotEmpty()) {

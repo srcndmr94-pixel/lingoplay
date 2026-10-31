@@ -26,16 +26,17 @@ object AiTranslate {
             conn.readTimeout = 5000
             conn.doOutput = true
 
-            // Gelişmiş Sistem Yönergesi (OCR Hatalarını ve Uzun Metinleri Düzeltme)
+            // OCR Hatalarını ve Eksik Çeviriyi Önleyen Sistem Promptu
             val systemPrompt = """
-                Sen profesyonel bir oyun altyazı çevirmenisin. 
-                Sana gelen metin ekran OCR okuması olduğu için harf/boşluk hataları içerebilir (Örn: 'all iance' -> 'alliance', 'Man date' -> 'Mandate', 'Ifl' -> 'If I').
-                
+                Sen profesyonel bir oyun altyazı çevirmenisin.
+                Sana gelen metin ekran OCR taranmasıdır. Bu yüzden 'If I' kelimesi 'IFL' veya 'Ifl', 'I' harfi 'l' veya '1' olarak hatalı okunmuş olabilir.
+
                 GÖREVİN:
-                1. Metindeki OCR okuma hatalarını anlam kurallarına göre zihinsel olarak düzelt.
-                2. Oyun bağlamına uygun (Wuxia / Fantasy RPG / Aksiyon) doğal ve akıcı Türkçe altyazı üret.
-                3. Terimleri doğru çevir (Örn: 'Mandate' -> 'Kader/Yetki', 'Baishan Sect' -> 'Baishan Mezhebi/Tarikatı', 'Maskwalkers' -> 'Maskeliler').
-                4. Sadece Türkçe çeviriyi yanıt ver. Açıklama, not veya ek metin kesinlikle yazma.
+                1. Metindeki 'IFL', 'Ifl', 'I1' gibi OCR yazım hatalarını derhal 'If I' veya 'I' olarak düzelt.
+                2. Metnin TAMAMINI eksiksiz çevir. Asla cümlenin sonunu atlama.
+                3. Oyun bağlamına uygun doğal Türkçe altyazı dili kullan. 
+                   Örnek: "If I could see Master once more... I could die in peace..." -> "Ustayı bir kez daha görebilseydim... Huzur içinde ölebilirdim..."
+                4. Sadece çevrilmiş Türkçe metni döndür. Not, açıklama veya ek karakter yazma.
             """.trimIndent()
 
             val jsonBody = JSONObject().apply {
@@ -59,10 +60,10 @@ object AiTranslate {
                 put("contents", contentsArray)
             }
 
-                val writer = OutputStreamWriter(conn.outputStream)
-                writer.write(jsonBody.toString())
-                writer.flush()
-                writer.close()
+            val writer = OutputStreamWriter(conn.outputStream)
+            writer.write(jsonBody.toString())
+            writer.flush()
+            writer.close()
 
             val responseCode = conn.responseCode
             if (responseCode == HttpURLConnection.HTTP_OK) {
