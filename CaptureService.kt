@@ -65,22 +65,27 @@ class CaptureService : Service() {
     private var screenWidth = 1080
     private var screenHeight = 1920
 
+    // Ekran titremesini önlemek için boş kare sayacı (debounce)
     private var blankFrameCount = 0
 
+    // Yalnızca Gemini çevirilerini saklayan, en çok 300 elemanlı LRU önbellek
     private val cloudTranslationCache = object : LinkedHashMap<String, String>(100, 0.75f, true) {
         override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, String>?): Boolean {
             return size > 300
         }
     }
 
+    // Soğuma ve hata yönetimi: 15s -> 30s -> 60s ... (en çok 5 dk)
     private var cooldownUntil: Long = 0
     private var currentBackoffDelayMs: Long = 15000
     private var isApiKeyFatalError = false
     private var lastToastMessage = ""
 
+    // SharedPreferences ön önbelleği (kare başına I/O engeli)
     private var cachedCropTopRatio = 0.65f
     private var cachedCropHeightRatio = 0.30f
 
+    // Bildirim şeridi tespitinde aranan uygulama adları
     private val notificationAppNames = listOf(
         "messenger", "facebook", "whatsapp", "geoguessr",
         "instagram", "telegram", "youtube", "discord", "gmail", "spotify"
@@ -96,6 +101,7 @@ class CaptureService : Service() {
         loadPreferences()
     }
 
+    // Not: yalnızca servis açılışında okunur; kırpma ayarı değişince servis yeniden başlatılmalı
     private fun loadPreferences() {
         val prefs = PreferenceManager.getDefaultSharedPreferences(this)
         cachedCropTopRatio = prefs.getFloat("crop_top_ratio", 0.65f)
@@ -217,7 +223,10 @@ class CaptureService : Service() {
                 fullBitmap = imageToBitmap(image)
                 if (fullBitmap != null) {
                     val cropY = (screenHeight * cachedCropTopRatio).toInt().coerceIn(0, screenHeight - 1)
-                    val cropHeight = (screenHeight * cachedCropHeightRatio).toInt().coerceAtLeast(1).coerceAtMost(screenHeight - cropY)
+                    // coerceAtLeast(1): oran 0 olduğunda createBitmap sıfır yükseklikte istisna atıyordu
+                    val cropHeight = (screenHeight * cachedCropHeightRatio).toInt()
+                        .coerceAtLeast(1)
+                        .coerceAtMost(screenHeight - cropY)
 
                     croppedBitmap = Bitmap.createBitmap(fullBitmap, 0, cropY, screenWidth, cropHeight)
 
@@ -232,12 +241,14 @@ class CaptureService : Service() {
                     recognizer.process(inputImage)
                         .addOnSuccessListener { visionText ->
                             val cleanedText = cleanOcrText(visionText.text)
-                            
+
+                            // SÜZGEÇ 1: ekran çöpü / HUD kontrolü (görünürlük)
                             if (isValidSubtitleText(cleanedText)) {
                                 blankFrameCount = 0
                                 handleDetectedText(cleanedText)
                             } else {
                                 blankFrameCount++
+                                // Titremeyi önlemek için 2 ardışık boş kareden sonra temizle
                                 if (blankFrameCount >= 2 && lastExtractedText.isNotEmpty()) {
                                     lastExtractedText = ""
                                     lastNormalizedText = ""
@@ -269,65 +280,101 @@ class CaptureService : Service() {
         }
     }
 
-    // Unicode diacritic cleaning to unify accented OCR artifacts like Leavé -> Leave
+    /** OCR'ın her karede farklı şapka taktığı okumaları düzler: Leavé / Leaveè -> Leave */
     private fun aksaniDuzle(s: String): String {
         val ayristirilmis = Normalizer.normalize(s, Normalizer.Form.NFD)
         return ayristirilmis.replace(Regex("\\p{Mn}+"), "")
     }
 
-    // Splits punctuation-glued words while protecting ellipses and decimals
+    /**
+     * Noktalamaya yapışmış kelimeleri ayırır; üç nokta dizilerini ve ondalık sayıları korur.
+     * Küçük harften sonra gelen nokta gerçek cümle sonu değil, OCR çöpüdür.
+     */
     private fun noktalamaAyir(s: String): String {
         var t = s
+        // Cümle noktalamasından sonra kalan tek harflik artık (him.o -> him.).
+        // Nokta boşluğa çevrilmeden ÖNCE çalışmalı, yoksa "him o" kalır.
+        t = Regex("(?<=[.!?])[a-z]\\b").replace(t, "")
+        // Üç nokta dizilerini ve ondalıkları geçici işaretle koru
         t = Regex("\\.{2,}").replace(t) { "\u0001".repeat(it.value.length) }
         t = Regex("(?<=\\d)\\.(?=\\d)").replace(t, "\u0002")
+        // küçük + nokta/virgül + küçük -> OCR çöpü, boşluğa çevir (fistart.cannot -> fistart cannot)
         t = Regex("(?<=[a-z])[.,](?=[a-z])").replace(t, " ")
+        // küçük + nokta/virgül + BÜYÜK -> gerçek cümle sonu, boşluk ekle
         t = Regex("(?<=[a-z])([.,])(?=[A-Z])").replace(t, "$1 ")
         return t.replace("\u0001", ".").replace("\u0002", ".")
     }
 
-    // Cleans OCR outputs, handling punctuation gluing, typos, and pronoun contractions securely
+    /**
+     * Büyük/küçük harf kaymalarını onarır: belongingS -> belongings,
+     * COwardice -> Cowardice, yourCowardice -> your Cowardice.
+     * 0ur/POur düzeltmelerinden SONRA çağrılmalı, yoksa "POur" -> "Pour" olur.
+     */
+    private fun harfKaymasiDuzelt(s: String): String {
+        var t = s
+        // Kelime sonunda yalnız kalan büyük harf
+        t = Regex("(?<=[a-z])([A-Z])\\b").replace(t) { it.groupValues[1].lowercase() }
+        // BÜYÜK + BÜYÜK + küçük dizisinde ikinciyi küçült
+        t = Regex("(?<=[A-Z])([A-Z])(?=[a-z]{2,})").replace(t) { it.groupValues[1].lowercase() }
+        // küçük -> BÜYÜK geçişine boşluk koy
+        t = Regex("(?<=[a-z])(?=[A-Z])").replace(t, " ")
+        return t
+    }
+
+    /** OCR çıktısını onarır: aksan, noktalama, harf kayması, kesme işareti ve bilinen yazım hataları. */
     private fun cleanOcrText(rawText: String): String {
         if (rawText.isBlank()) return ""
+
         val unaccented = aksaniDuzle(rawText)
         val punctuated = noktalamaAyir(unaccented)
-        return punctuated
+
+        val tekSatir = punctuated
             .replace("\r\n", " ")
             .replace("\n", " ")
-            .replace("\u2019", "'")
-            .replace("\u2018", "'")
-            .replace("\u201C", "")
-            .replace("\u201D", "")
+            .replace("’", "'")            // kıvrık ' -> düz '
+            .replace("‘", "'")
+            .replace("“", "")             // yalnızca çift tırnaklar atılır
+            .replace("”", "")
             .replace("\"", "")
             .replace("`", "'")
-            .replace(Regex("(?<![A-Za-z0-9])0(?=[a-z]{2,})"), "O")   // Corrects 0ur -> Our
-            .replace(Regex("^[A-Z](?=[A-Z][a-z]{2,})"), "")          // Cleans POur -> Our
-            // Possessive attachment splitter (Sect'sfistart -> Sect's fistart) before pronouns
-            .replace(Regex("\\b([A-Z][a-z]{2,})'s(?=[a-z]{3,})"), "$1's ")
+            .replace(Regex("(?<![A-Za-z0-9])0(?=[a-z]{2,})"), "O")   // 0ur -> Our
+            .replace(Regex("^[A-Z](?=[A-Z][a-z]{2,})"), "")          // POur -> Our
+
+        return harfKaymasiDuzelt(tekSatir)
+            // Yapışık iyelik eki; zamir kurallarından ÖNCE gelmeli
+            .replace(Regex("\\b([A-Z][a-z]{2,})'s(?=[a-z]{3,})"), "$1's ")   // Sect'sfistart -> Sect's fistart
+            // Zamir + kısaltma: boşluğu kapat (You 're -> You're)
             .replace(Regex("(?i)\\b(you|we|they)\\s*'(re|ve|ll|d)\\b"), "$1'$2")
             .replace(Regex("(?i)\\b(i)\\s*'(m|ve|ll|d)\\b"), "$1'$2")
             .replace(Regex("(?i)\\b(he|she|it|that|there|who|what)\\s*'(s|ll|d|ve)\\b"), "$1'$2")
+            // Ek bir sonraki kelimeye yapışmışsa ayır ('s hariç: "that's ecret" riski)
             .replace(Regex("(?i)\\b(you|we|they)\\s*'(re|ve|ll|d)(?=[a-z]{3,})"), "$1'$2 ")
             .replace(Regex("(?i)\\b(i)\\s*'(m|ve|ll|d)(?=[a-z]{3,})"), "$1'$2 ")
             .replace(Regex("(?i)\\b(he|she|it|that|there|who|what)\\s*'(ll|d|ve)(?=[a-z]{3,})"), "$1'$2 ")
-            .replace(Regex("(?i)\\byoutre\\b"), "You're")
+            .replace(Regex("(?i)\\byoutre\\b"), "You're")   // kesme işareti t okunmuş
             .replace(Regex("(?i)\\byouive\\b"), "You've")
             .replace(Regex("(?i)\\bIFL\\b"), "If I")
             .replace(Regex("(?i)\\bIfl\\b"), "If I")
-            .replace(Regex("\\bl(?=')"), "I")
-            .replace(Regex("\\bl\\b"), "I")
-            .replace(Regex("(?<=\\bIf\\s)[l1]\\b"), "I")
-            .replace("vw", "w")
+            .replace(Regex("\\bl(?=')"), "I")              // l'll, l'm, l've -> I'll, I'm, I've
+            .replace(Regex("\\bl\\b"), "I")                // tek başına l her zaman I'dır
+            .replace(Regex("(?<=\\bIf\\s)[l1]\\b"), "I")   // If l / If 1 -> If I
+            .replace("vw", "w")                            // unvworthy -> unworthy
             .replace(Regex("\\s+"), " ")
             .trim()
     }
 
-    // Detects notification popups/banners in OCR text
+    /**
+     * Bildirim şeridi mi? İmzası, birden fazla uygulama adını yan yana taşımasıdır.
+     * Boşluklar atılarak eşleştirilir, çünkü OCR adları bölüyor: "Face book" -> "facebook".
+     */
     private fun isNotificationBanner(text: String): Boolean {
         val sikistirilmis = text.lowercase().replace(Regex("[^a-z]"), "")
         val eslesme = notificationAppNames.count { sikistirilmis.contains(it) }
 
+        // İki veya daha fazla uygulama adı: kesin bildirim şeridi
         if (eslesme >= 2) return true
 
+        // Tek ad: yalnızca cümle değilse ve kısaysa (diyalogda geçen adı elemeyelim)
         if (eslesme == 1) {
             val gorunur = text.count { !it.isWhitespace() }
             val cumleMi = text.any { it in ".!?" }
@@ -336,7 +383,11 @@ class CaptureService : Service() {
         return false
     }
 
-    // Filters out interactive game button prompts and HUD instructions
+    /**
+     * Tuş rehberi / HUD talimatı mı?
+     * Yalnızca "press"/"hold" kelimesine bakmak "Hold the line!" gibi gerçek replikleri de eler.
+     * Bilinen ödün: köşe parantez kuralı ses ve konuşmacı etiketlerini de eler ([Sighs], [Chen]).
+     */
     private fun isInputPrompt(text: String): Boolean {
         if (Regex("\\[[^\\]]{1,12}\\]").containsMatchIn(text)) return true
         if (Regex("(?i)\\b(press|hold|tap)\\b.{0,30}\\bto\\b").containsMatchIn(text)) return true
@@ -344,6 +395,11 @@ class CaptureService : Service() {
         return false
     }
 
+    /**
+     * SÜZGEÇ 1 — ekrana basılır mı? HUD, can barı, sayaç, tuş simgesi ve bildirim eler.
+     * Oran YALNIZCA görünür karakterler üzerinden hesaplanır; boşluklar paydayı şişirip
+     * "HP 87 / MP 42" gibi satırların süzgeci geçmesine yol açıyordu.
+     */
     private fun isValidSubtitleText(text: String): Boolean {
         if (text.length < 2) return false
 
@@ -354,6 +410,7 @@ class CaptureService : Service() {
             return false
         }
 
+        // Tek harfli artıkları ("x2", "L1") ele
         val letterCount = text.count { it.isLetter() }
         if (letterCount < 2) return false
 
@@ -363,6 +420,10 @@ class CaptureService : Service() {
         return true
     }
 
+    /**
+     * SÜZGEÇ 2 — Gemini kotası harcanır mı?
+     * En az 2 adet 3+ harfli kelime gerekir; "Run!", "Yes." bedava yerel çeviride kalır.
+     */
     private fun shouldSendToCloud(text: String): Boolean {
         val meaningfulWords = text.split(" ").filter { word -> word.count { it.isLetter() } >= 3 }
         return meaningfulWords.size >= 2
@@ -372,7 +433,11 @@ class CaptureService : Service() {
         return aksaniDuzle(text).lowercase().replace(Regex("[^a-z0-9]"), "")
     }
 
-    // Adaptive Levenshtein fuzzy text deduplication threshold
+    /**
+     * OCR titremesini aynı metin sayar. Ölçüm: aynı repliğin varyantları 0.00–0.32
+     * oranında, gerçekten farklı replikler 0.68–0.88 oranında ayrışıyor.
+     * Kısa satırlarda sınır 1'de kalır, yoksa "End this for me" ile "End this for now" birleşir.
+     */
     private fun ayniMetinMi(yeni: String, onceki: String): Boolean {
         if (onceki.isEmpty()) return false
         if (yeni == onceki) return true
@@ -381,6 +446,7 @@ class CaptureService : Service() {
         return uzaklikEnFazla(yeni, onceki, sinir)
     }
 
+    /** Levenshtein uzaklığı sınırı aşıyor mu? Erken çıkışlı, tam matris kurmaz. */
     private fun uzaklikEnFazla(a: String, b: String, sinir: Int): Boolean {
         if (kotlin.math.abs(a.length - b.length) > sinir) return false
         var onceki = IntArray(b.length + 1) { it }
@@ -407,6 +473,7 @@ class CaptureService : Service() {
         lastNormalizedText = normalized
         hasCloudTranslated = false
 
+        // 1. AŞAMA: geçmiş Gemini çevirisi varsa doğrudan kullan
         val cachedCloudTranslation = cloudTranslationCache[normalized]
         if (cachedCloudTranslation != null) {
             hasCloudTranslated = true
@@ -414,6 +481,7 @@ class CaptureService : Service() {
             return
         }
 
+        // 2. AŞAMA: yerel ML Kit çevirisini anında ekrana bas (bedava)
         if (isLocalTranslatorReady) {
             localTranslator?.translate(text)
                 ?.addOnSuccessListener { localTranslation ->
@@ -423,10 +491,12 @@ class CaptureService : Service() {
                 }
         }
 
+        // 3. AŞAMA: kısa replikler için kota harcamadan yerelde kal
         if (!shouldSendToCloud(text)) {
             return
         }
 
+        // 4. AŞAMA: uzun replikler için Gemini'yi sorgula
         val now = System.currentTimeMillis()
         if (isApiKeyFatalError || now < cooldownUntil) {
             return
@@ -442,10 +512,15 @@ class CaptureService : Service() {
             if (result.isSuccess) {
                 currentBackoffDelayMs = 15000
                 val fullTranslation = result.getOrDefault("")
-                if (lastNormalizedText == normalized && fullTranslation.isNotEmpty()) {
-                    hasCloudTranslated = true
+                if (fullTranslation.isNotEmpty()) {
+                    // Önbelleğe HER ZAMAN yaz: geç gelen yanıt ekrana basılmasa da
+                    // kota harcanmıştır, aynı replik tekrar geldiğinde yeniden istek atılmasın
                     cloudTranslationCache[normalized] = fullTranslation
-                    updateOverlayText(fullTranslation)
+                    // Ekrana yalnızca altyazı hâlâ geçerliyse bas
+                    if (lastNormalizedText == normalized) {
+                        hasCloudTranslated = true
+                        updateOverlayText(fullTranslation)
+                    }
                 }
             } else {
                 val errorCode = result.exceptionOrNull()?.message ?: "UNKNOWN"
@@ -457,6 +532,7 @@ class CaptureService : Service() {
     private fun handleTranslationError(errorCode: String) {
         val now = System.currentTimeMillis()
         when {
+            // Güvenlik filtresine takılan tek satır yüzünden tüm bulut çevirisi duraklatılmaz
             errorCode.contains("EMPTY_RESPONSE") -> {}
             errorCode.contains("401") -> {
                 isApiKeyFatalError = true
@@ -471,6 +547,11 @@ class CaptureService : Service() {
                 cooldownUntil = now + currentBackoffDelayMs
                 showSingleToast("Sunucu Yoğun (503). Soğuma: ${currentBackoffDelayMs / 1000}s")
                 currentBackoffDelayMs = (currentBackoffDelayMs * 2).coerceAtMost(300000)
+            }
+            // Ağ hatası sunucu reddi değildir: kısa soğuma uygulanır, üstel artış yoktur
+            errorCode.contains("NET_ERROR") -> {
+                cooldownUntil = now + 5000
+                showSingleToast("Ağ Hatası. 5s sonra yeniden denenecek (Yerel Çeviri Aktif)")
             }
             else -> {
                 cooldownUntil = now + 15000
@@ -534,12 +615,14 @@ class CaptureService : Service() {
         virtualDisplay?.release()
         virtualDisplay = null
 
+        // imageReader kapatılmazsa her servis turunda ~16 MB RGBA tampon açıkta kalır
         imageReader?.close()
         imageReader = null
 
         mediaProjection?.stop()
         mediaProjection = null
 
+        // Zaten kaldırılmış görünümde removeView istisna atıp onDestroy'u yarıda keser
         overlayView?.let { v -> runCatching { windowManager?.removeView(v) } }
         overlayView = null
     }

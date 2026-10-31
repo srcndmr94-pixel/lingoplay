@@ -31,8 +31,11 @@ object AiTranslate {
                 conn = url.openConnection() as HttpURLConnection
                 conn.requestMethod = "POST"
                 conn.setRequestProperty("Content-Type", "application/json")
+                // Bağlanma hızlı olmalı; yanıt üretimi için bol süre tanınır.
+                // 4 sn okuma süresi tüm isteklerin timeout almasına yol açıyordu:
+                // yerel çeviri zaten ekranda olduğu için geç gelen bulut yanıtı bedavadır.
                 conn.connectTimeout = 4000
-                conn.readTimeout = 4000
+                conn.readTimeout = 12000
                 conn.doOutput = true
 
                 val systemPrompt = """
@@ -44,14 +47,15 @@ object AiTranslate {
                     - "the Order" = Tarikat (asla "sipariş" değil)
                     - "Sect" = Klan / Tarikat (asla "mezhep" değil)
                     - "Perfect Transcension" = Kusursuz Yükseliş
-                    - "Sha Chi", "Qi", "Dao" = olduğu gibi bırak
-                    - Büyük harfle yazılmış iki kelimelik adlar ("Iron Fever" gibi) beceri/teknik adıdır, anlamını koruyarak çevir veya olduğu gibi bırak
+                    - "Sha Chi", "Qi", "Dao", "wulin" = olduğu gibi bırak
+                    - Büyük harfle yazılmış iki kelimelik adlar ("Iron Fever", "Iron Fist" gibi) beceri/teknik/klan adıdır, anlamını koruyarak çevir veya olduğu gibi bırak
 
                     GÖREVİN:
                     1. Metindeki 'IFL', 'Ifl', 'I1' gibi OCR yazım hatalarını 'If I' veya 'I' olarak düzelt.
-                    2. Metnin TAMAMINI eksiksiz çevir.
-                    3. Oyun bağlamına uygun doğal Türkçe altyazı dili kullan.
-                    4. Sadece çevrilmiş Türkçe metni döndür. Not veya açıklama ekleme.
+                    2. OCR bazı kelimeleri birbirine yapıştırmış olabilir ('destroyit', 'listenedto', 'Iwas'). Bunları ayırarak çevir.
+                    3. Metnin TAMAMINI eksiksiz çevir.
+                    4. Oyun bağlamına uygun doğal Türkçe altyazı dili kullan.
+                    5. Sadece çevrilmiş Türkçe metni döndür. Not veya açıklama ekleme.
                 """.trimIndent()
 
                 val jsonBody = JSONObject().apply {
@@ -98,15 +102,18 @@ object AiTranslate {
                             }
                         }
                     }
+                    // 200 OK ama yanıt boş (güvenlik filtresi vb.) -> yerel çeviri ekranda kalsın
                     return@withContext Result.failure(Exception("EMPTY_RESPONSE"))
                 } else {
+                    // Gövdeyi boşalt: okunmamış hata akışı keep-alive havuzunu doldurup
+                    // kota hatalarını NET_ERROR'a dönüştürüyordu
                     conn.errorStream?.use { it.readBytes() }
                     when (responseCode) {
                         503 -> {
                             attempts++
                             if (attempts < maxAttempts) {
                                 delay(400)
-                                continue
+                                continue // finally bloğu çalışır, ilk conn kapatılır
                             }
                             return@withContext Result.failure(Exception("503: High Demand"))
                         }
@@ -117,6 +124,7 @@ object AiTranslate {
                     }
                 }
             } catch (e: CancellationException) {
+                // Servis kapanırken sahte NET_ERROR günlüğü üretmemek için yukarı iletilir
                 throw e
             } catch (e: Exception) {
                 return@withContext Result.failure(Exception("NET_ERROR: ${e.localizedMessage}"))
@@ -125,6 +133,7 @@ object AiTranslate {
             }
         }
 
+        // Erişilemez; Kotlin'in dönüş türü (Result<String>) eşleşmesi için gerekli kapanış
         return@withContext Result.failure(Exception("UNKNOWN"))
     }
 }
