@@ -98,7 +98,9 @@ class CaptureService : Service() {
         "unequip", "settings", "options", "menu", "remove", "place", "close", "back",
         "save", "load", "quit", "resume", "retry", "respawn", "waypoint", "objective",
         "quest", "craft", "upgrade", "purchase", "sell", "buy", "confirm", "cancel",
-        "apply", "reset", "filter", "sort"
+        "apply", "reset", "filter", "sort",
+        "unassign", "credits", "patch", "notes", "release", "wheel",
+        "defaults", "remap", "rebind", "fleet"
     )
 
     // Tuş şeridinde geçen eylem adları (L3 Lunge / Swim Up / Dive)
@@ -113,7 +115,17 @@ class CaptureService : Service() {
     private val turkishChars = "ışğüöçİŞĞÜÖÇ".toSet()
     private val turkishWords = setOf(
         "ve", "bir", "bu", "için", "ile", "çok", "değil", "var", "yok",
-        "ama", "gibi", "daha", "kadar", "sen", "ben"
+        "ama", "gibi", "daha", "kadar", "sen", "ben", "biz", "siz",
+        "ne", "nasıl", "neden", "et", "de", "da", "şey", "olarak",
+        "sonra", "önce", "her", "şu", "onu", "beni", "seni", "bize"
+    )
+
+    // Türkçeye özgü ek kalıpları. "Kurulumu kontrol et" gibi satırlarda ne özel
+    // harf ne de liste kelimesi bulunuyordu. Üç harfli -ler / -lar KASTEN yok:
+    // "ruler", "butler" gibi İngilizce kelimeler yanlış pozitif üretiyor.
+    private val turkishSuffix = Regex(
+        "\\w+(mak|mek|yor|dır|dir|dur|dür|acak|ecek|umu|ümü|ını|ini|unu|ünü|" +
+            "lık|lik|luk|lük|leri|ları|lara|lere|ların|lerin|larda|lerde)$"
     )
 
     override fun onBind(intent: Intent?): IBinder? = null
@@ -352,8 +364,10 @@ class CaptureService : Service() {
      */
     private fun zatenTurkce(ham: String): Boolean {
         if (ham.count { it in turkishChars } >= 2) return true
-        return Regex("[^\\W\\d_]+").findAll(ham.lowercase())
-            .any { it.value in turkishWords }
+
+        val kelimeler = Regex("[^\\W\\d_]+").findAll(ham.lowercase()).map { it.value }
+
+        return kelimeler.any { it in turkishWords || turkishSuffix.matches(it) }
     }
 
     /** OCR çıktısını onarır: aksan, noktalama, harf kayması, kesme işareti ve bilinen yazım hataları. */
@@ -436,8 +450,12 @@ class CaptureService : Service() {
         if (Regex("(?<![A-Za-z])(?:[LR][123]|LB|RB|LT|RT)(?![A-Za-z])").containsMatchIn(text)) return true
         // PlayStation / Xbox tuş simgeleri
         if (Regex("[✕✖○◯◉△▲□■⊗⊙]").containsMatchIn(text)) return true
-        // Kapanış parantezli yalın tuş harfi: "X) Swim Up", "o) Dive"
-        if (Regex("(?<![A-Za-z])[XxOo]\\s*\\)").containsMatchIn(text)) return true
+        // Parantez içinde tek tuş harfi: (A) (B) (X) (O) (Y) — Xbox A/B/Y de dahil
+        if (Regex("\\(\\s*[ABXYOabxyo]\\s*\\)").containsMatchIn(text)) return true
+        // Yarım parantezli tuş harfi: "A) Reset", "O) Close", "O)) Release Wheel"
+        if (Regex("(?<![A-Za-z])[ABXYOabxyo]\\)+").containsMatchIn(text)) return true
+        // Satır başında yalın tuş harfi + menü kelimesi: "A Reset", "O Unassign"
+        if (Regex("(?:^|\\s)[ABXYO]\\s+[A-Z][a-z]+").containsMatchIn(text)) return true
         // İki veya daha fazla tuş eylemi yan yana ve cümle noktalaması yok.
         // Noktalama şartı, "I'll swim across at dawn." gibi gerçek replikleri korur.
         if (text.none { it in ".!?…" }) {
