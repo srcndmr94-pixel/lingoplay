@@ -73,6 +73,17 @@ object TextFix {
         yourselves
     """.trimIndent().split(Regex("\\s+")).filter { it.isNotBlank() }.toSet()
 
+    /**
+     * Büyük harfi korunacak oyun terimleri. WORDS içinde de bulunabilirler (bölünmeye
+     * karşı koruma için) ama cümle ortasında küçültülmezler: "the Order" tarikat adıdır
+     * ve büyük harf, çevirmene özel isim olduğunu söyler.
+     * AiTranslate sistem istemindeki sözlükle aynı terimleri taşımalıdır.
+     */
+    private val KORUNAN_TERIMLER = setOf(
+        "order", "sect", "transcension", "dao", "qi", "wulin",
+        "creed", "brotherhood", "templar", "assassin"
+    )
+
     private fun bilinen(w: String): Boolean = w.lowercase() in WORDS
 
     /**
@@ -150,6 +161,7 @@ object TextFix {
                     govdesi.isNotEmpty() &&
                     govdesi == govdesi.lowercase() &&
                     bilinen(p) &&
+                    p.lowercase() !in KORUNAN_TERIMLER &&
                     p != "I"
                 ) {
                     p = p.first().lowercaseChar() + p.drop(1)

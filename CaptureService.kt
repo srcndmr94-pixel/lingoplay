@@ -35,6 +35,7 @@ import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -56,7 +57,9 @@ class CaptureService : Service() {
     private var localTranslator: Translator? = null
     private var isLocalTranslatorReady = false
 
-    private val serviceScope = CoroutineScope(Dispatchers.Main + Job())
+    // SupervisorJob şart: düz Job ile tek bir çocuk coroutine hata atınca TÜM kapsam
+    // iptal oluyor ve tarama döngüsü bir daha hiç çalışmıyor, üstelik sessizce.
+    private val serviceScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
     private var lastExtractedText = ""
     private var lastNormalizedText = ""
@@ -85,8 +88,15 @@ class CaptureService : Service() {
     private var cachedCropTopRatio = 0.65f
     private var cachedCropHeightRatio = 0.30f
 
-    // OCR öncesi büyütme katsayısı. 1 = kapalı.
-    private val OCR_OLCEK = 2
+    // OCR öncesi büyütme katsayısı. 1f = kapalı.
+    private val OCR_OLCEK = 1.5f
+
+    // Büyütülmüş görüntü için üst sınır. 2 kat büyütme 1080x576'lık bir kırpmada
+    // ~10 MB ARGB ayırıyordu; saniyede üç kare bu boyutta bellek hatası üretebiliyor.
+    private val OCR_AZAMI_PIKSEL = 2_200_000L
+
+    // Art arda başarısız kare sayacı: sessiz çökmeyi görünür kılar
+    private var ardisikHataSayisi = 0
 
     // Bildirim şeridi tespitinde aranan uygulama adları
     private val notificationAppNames = listOf(
@@ -285,6 +295,7 @@ class CaptureService : Service() {
                     val inputImage = InputImage.fromBitmap(olcekli, 0)
                     recognizer.process(inputImage)
                         .addOnSuccessListener { visionText ->
+                            ardisikHataSayisi = 0
                             val cleanedText = cleanOcrText(visionText.text)
 
                             // SÜZGEÇ 1: ekran çöpü / HUD kontrolü (görünürlük)
@@ -315,8 +326,15 @@ class CaptureService : Service() {
                 } else {
                     isProcessing = false
                 }
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
+                // Throwable: OutOfMemoryError bir Error'dur, Exception yakalamaz.
+                // Yakalanmazsa SupervisorJob olmadan tüm kapsam iptal olur ve
+                // tarama döngüsü sessizce ölür.
                 e.printStackTrace()
+                ardisikHataSayisi++
+                if (ardisikHataSayisi == 5) {
+                    showSingleToast("Ekran okuma hatası. Ayarlardan kırpma alanını küçültmeyi deneyin.")
+                }
                 fullBitmap?.recycle()
                 if (croppedBitmap != null && croppedBitmap != fullBitmap) {
                     croppedBitmap.recycle()
@@ -333,14 +351,29 @@ class CaptureService : Service() {
      * kırpmada ~10 MB ARGB tampon demektir; cihaz zorlanırsa OCR_OLCEK'i 1 yapın,
      * büyütme tamamen devre dışı kalır.
      */
-    private fun ocrIcinBuyut(kaynak: Bitmap, kat: Int): Bitmap {
-        if (kat <= 1) return kaynak
-        return Bitmap.createScaledBitmap(
-            kaynak,
-            kaynak.width * kat,
-            kaynak.height * kat,
-            true
-        )
+    private fun ocrIcinBuyut(kaynak: Bitmap, kat: Float): Bitmap {
+
+        if (kat <= 1f) return kaynak
+
+        var genislik = (kaynak.width * kat).toInt()
+        var yukseklik = (kaynak.height * kat).toInt()
+
+        // Piksel bütçesini aşma
+        val toplam = genislik.toLong() * yukseklik.toLong()
+        if (toplam > OCR_AZAMI_PIKSEL) {
+            val k = kotlin.math.sqrt(OCR_AZAMI_PIKSEL.toDouble() / toplam.toDouble())
+            genislik = (genislik * k).toInt()
+            yukseklik = (yukseklik * k).toInt()
+        }
+
+        if (genislik <= kaynak.width || yukseklik <= kaynak.height) return kaynak
+
+        // Bellek yetmezse büyütmeden devam et; büyütme bir iyileştirme, zorunluluk değil
+        return try {
+            Bitmap.createScaledBitmap(kaynak, genislik, yukseklik, true)
+        } catch (e: Throwable) {
+            kaynak
+        }
     }
 
     /** OCR'ın her karede farklı şapka taktığı okumaları düzler: Leavé / Leaveè -> Leave */
