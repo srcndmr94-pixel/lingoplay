@@ -11,22 +11,26 @@ import org.json.JSONArray
 
 object AiTranslate {
 
-    private const val API_KEY = "AQ.Ab8RN6LLRxvKT1_z2zC0ODGiwXWfN1u11CHYuNUvTFnTBuRETA"
-    private const val API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
-
-    suspend fun translateWithClaude(text: String, gameName: String = "RPG Game"): String = withContext(Dispatchers.IO) {
-        if (text.isBlank()) return@withContext ""
-        if (API_KEY.isBlank()) return@withContext "Hata: API Key yok"
+    suspend fun translateWithGemini(
+        text: String,
+        apiKey: String,
+        modelName: String = "gemini-flash-latest"
+    ): Result<String> = withContext(Dispatchers.IO) {
+        if (text.isBlank()) return@withContext Result.success("")
+        if (apiKey.isBlank()) return@withContext Result.failure(Exception("401: Empty Key"))
 
         var attempts = 0
-        while (attempts < 2) {
+        val maxAttempts = 2
+
+        while (attempts < maxAttempts) {
             try {
-                val url = URL("$API_URL?key=$API_KEY")
+                val endpoint = "https://generativelanguage.googleapis.com/v1beta/models/$modelName:generateContent"
+                val url = URL("$endpoint?key=$apiKey")
                 val conn = url.openConnection() as HttpURLConnection
                 conn.requestMethod = "POST"
                 conn.setRequestProperty("Content-Type", "application/json")
-                conn.connectTimeout = 5000
-                conn.readTimeout = 5000
+                conn.connectTimeout = 4000
+                conn.readTimeout = 4000
                 conn.doOutput = true
 
                 val systemPrompt = """
@@ -34,11 +38,10 @@ object AiTranslate {
                     Sana gelen metin ekran OCR taranmasıdır. Bu yüzden 'If I' kelimesi 'IFL' veya 'Ifl', 'I' harfi 'l' veya '1' olarak hatalı okunmuş olabilir.
 
                     GÖREVİN:
-                    1. Metindeki 'IFL', 'Ifl', 'I1' gibi OCR yazım hatalarını derhal 'If I' veya 'I' olarak düzelt.
-                    2. Metnin TAMAMINI eksiksiz çevir. Asla cümlenin sonunu atlama.
-                    3. Oyun bağlamına uygun doğal Türkçe altyazı dili kullan. 
-                       Örnek: "If I could see Master once more... I could die in peace..." -> "Ustayı bir kez daha görebilseydim... Huzur içinde ölebilirdim..."
-                    4. Sadece çevrilmiş Türkçe metni döndür. Not, açıklama veya ek karakter yazma.
+                    1. Metindeki 'IFL', 'Ifl', 'I1' gibi OCR yazım hatalarını 'If I' veya 'I' olarak düzelt.
+                    2. Metnin TAMAMINI eksiksiz çevir.
+                    3. Oyun bağlamına uygun doğal Türkçe altyazı dili kullan.
+                    4. Sadece çevrilmiş Türkçe metni döndür. Not veya açıklama ekleme.
                 """.trimIndent()
 
                 val jsonBody = JSONObject().apply {
@@ -78,22 +81,37 @@ object AiTranslate {
                         if (content != null) {
                             val parts = content.optJSONArray("parts")
                             if (parts != null && parts.length() > 0) {
-                                return@withContext parts.getJSONObject(0).optString("text", "").trim()
+                                val translated = parts.getJSONObject(0).optString("text", "").trim()
+                                if (translated.isNotEmpty()) {
+                                    return@withContext Result.success(translated)
+                                }
                             }
                         }
                     }
-                } else if (responseCode == 503) {
-                    // Sunucu yoğunluğunda kısa bir bekleme ekleyip tekrar dene
-                    attempts++
-                    delay(400)
-                    continue
+                    // Sunucu 200 OK döndü ama yanıt boş (Güvenlik filtresi vb.) -> Yerel çeviriyi korumak için hata fırlatılır
+                    return@withContext Result.failure(Exception("EMPTY_RESPONSE"))
+                } else {
+                    when (responseCode) {
+                        503 -> {
+                            attempts++
+                            if (attempts < maxAttempts) {
+                                delay(400)
+                                continue
+                            }
+                            return@withContext Result.failure(Exception("503: High Demand"))
+                        }
+                        401 -> return@withContext Result.failure(Exception("401: Invalid Key"))
+                        404 -> return@withContext Result.failure(Exception("404: Model Not Found"))
+                        429 -> return@withContext Result.failure(Exception("429: Rate Limit Exceeded"))
+                        else -> return@withContext Result.failure(Exception("$responseCode: HTTP Error"))
+                    }
                 }
             } catch (e: Exception) {
-                e.printStackTrace()
+                return@withContext Result.failure(Exception("NET_ERROR: ${e.localizedMessage}"))
             }
             attempts++
         }
 
-        return@withContext ""
+        return@withContext Result.failure(Exception("UNKNOWN"))
     }
 }
