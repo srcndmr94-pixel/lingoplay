@@ -85,6 +85,9 @@ class CaptureService : Service() {
     private var cachedCropTopRatio = 0.65f
     private var cachedCropHeightRatio = 0.30f
 
+    // OCR öncesi büyütme katsayısı. 1 = kapalı.
+    private val OCR_OLCEK = 2
+
     // Bildirim şeridi tespitinde aranan uygulama adları
     private val notificationAppNames = listOf(
         "messenger", "facebook", "whatsapp", "geoguessr",
@@ -274,7 +277,12 @@ class CaptureService : Service() {
                         return@launch
                     }
 
-                    val inputImage = InputImage.fromBitmap(c, 0)
+                    // OCR'a vermeden önce büyüt: ML Kit ince ve küçük yazıda belirgin
+                    // biçimde daha iyi okuyor. Kırpılmış alan ekranın küçük bir parçası
+                    // olduğu için maliyeti kabul edilebilir.
+                    val olcekli = ocrIcinBuyut(c, OCR_OLCEK)
+
+                    val inputImage = InputImage.fromBitmap(olcekli, 0)
                     recognizer.process(inputImage)
                         .addOnSuccessListener { visionText ->
                             val cleanedText = cleanOcrText(visionText.text)
@@ -295,6 +303,9 @@ class CaptureService : Service() {
                             }
                         }
                         .addOnCompleteListener {
+                            if (olcekli != c) {
+                                olcekli.recycle()
+                            }
                             if (c != f) {
                                 c.recycle()
                             }
@@ -315,6 +326,21 @@ class CaptureService : Service() {
                 image.close()
             }
         }
+    }
+
+    /**
+     * OCR'a verilmeden önce kırpılmış görüntüyü büyütür. 2 kat, 1080x576'lık bir
+     * kırpmada ~10 MB ARGB tampon demektir; cihaz zorlanırsa OCR_OLCEK'i 1 yapın,
+     * büyütme tamamen devre dışı kalır.
+     */
+    private fun ocrIcinBuyut(kaynak: Bitmap, kat: Int): Bitmap {
+        if (kat <= 1) return kaynak
+        return Bitmap.createScaledBitmap(
+            kaynak,
+            kaynak.width * kat,
+            kaynak.height * kat,
+            true
+        )
     }
 
     /** OCR'ın her karede farklı şapka taktığı okumaları düzler: Leavé / Leaveè -> Leave */
