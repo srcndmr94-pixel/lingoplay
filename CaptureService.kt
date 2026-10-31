@@ -88,7 +88,24 @@ class CaptureService : Service() {
     // Bildirim şeridi tespitinde aranan uygulama adları
     private val notificationAppNames = listOf(
         "messenger", "facebook", "whatsapp", "geoguessr",
-        "instagram", "telegram", "youtube", "discord", "gmail", "spotify"
+        "instagram", "telegram", "youtube", "discord", "gmail", "spotify",
+        "primevideo", "netflix", "pydroid", "twitch", "tiktok"
+    )
+
+    // Oyun menü/arayüz etiketlerinde geçen kelimeler (harita, dükkân, envanter)
+    private val uiLabelWords = setOf(
+        "marker", "markers", "legend", "exit", "shop", "map", "inventory", "equip",
+        "unequip", "settings", "options", "menu", "remove", "place", "close", "back",
+        "save", "load", "quit", "resume", "retry", "respawn", "waypoint", "objective",
+        "quest", "craft", "upgrade", "purchase", "sell", "buy", "confirm", "cancel",
+        "apply", "reset", "filter", "sort"
+    )
+
+    // Türkçeye özgü harfler: zaten Türkçe olan metni yeniden çevirmemek için
+    private val turkishChars = "ışğüöçİŞĞÜÖÇ".toSet()
+    private val turkishWords = setOf(
+        "ve", "bir", "bu", "için", "ile", "çok", "değil", "var", "yok",
+        "ama", "gibi", "daha", "kadar", "sen", "ben"
     )
 
     override fun onBind(intent: Intent?): IBinder? = null
@@ -321,9 +338,21 @@ class CaptureService : Service() {
         return t
     }
 
+    /**
+     * Metin zaten Türkçe mi? HAM metin üzerinde çalışmalı: aksaniDuzle şapkaları
+     * düzlediği için (ü -> u, ç -> c) kendisinden sonra bu kontrol çalışmaz.
+     */
+    private fun zatenTurkce(ham: String): Boolean {
+        if (ham.count { it in turkishChars } >= 2) return true
+        return Regex("[^\\W\\d_]+").findAll(ham.lowercase())
+            .any { it.value in turkishWords }
+    }
+
     /** OCR çıktısını onarır: aksan, noktalama, harf kayması, kesme işareti ve bilinen yazım hataları. */
     private fun cleanOcrText(rawText: String): String {
         if (rawText.isBlank()) return ""
+        // Türkçe bildirim/reklam metnini çevirmeye çalışma (Parmak uçlarında güvenlik)
+        if (zatenTurkce(rawText)) return ""
 
         val unaccented = aksaniDuzle(rawText)
         val punctuated = noktalamaAyir(unaccented)
@@ -392,7 +421,22 @@ class CaptureService : Service() {
         if (Regex("\\[[^\\]]{1,12}\\]").containsMatchIn(text)) return true
         if (Regex("(?i)\\b(press|hold|tap)\\b.{0,30}\\bto\\b").containsMatchIn(text)) return true
         if (Regex("(?i)[+□○△✕]\\s*(to|and)\\b").containsMatchIn(text)) return true
+        // Simge jetonları: (x) (X) (o) ve OCR'ın simgeden ürettiği )) / oo artıkları
+        if (Regex("\\(\\s*[xXoO+]\\s*\\)").containsMatchIn(text)) return true
+        if (Regex("(?:^|\\s)(?:\\)\\)|oo)(?=\\s)").containsMatchIn(text)) return true
         return false
+    }
+
+    /**
+     * Menü / harita etiketi mi? (Place marker, Remove all markers, Legend, See Shop Exit)
+     * İmza: cümle noktalaması yok, en çok dört kelime, içinde bir arayüz kelimesi var.
+     * Gerçek diyalog ya noktalama taşır ya da bu kelimeleri içermez.
+     */
+    private fun isMenuLabel(text: String): Boolean {
+        if (text.any { it in ".!?…" }) return false
+        val words = Regex("[A-Za-z']+").findAll(text).map { it.value }.toList()
+        if (words.isEmpty() || words.size > 4) return false
+        return words.any { it.lowercase() in uiLabelWords }
     }
 
     /**
@@ -406,7 +450,7 @@ class CaptureService : Service() {
         val visibleCount = text.count { !it.isWhitespace() }
         if (visibleCount == 0) return false
 
-        if (isNotificationBanner(text) || isInputPrompt(text)) {
+        if (isNotificationBanner(text) || isInputPrompt(text) || isMenuLabel(text)) {
             return false
         }
 
