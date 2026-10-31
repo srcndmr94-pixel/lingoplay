@@ -412,6 +412,11 @@ class CaptureService : Service() {
             .replace("vw", "w")                            // unvworthy -> unworthy
             .replace(Regex("\\s+"), " ")
             .trim()
+            // Yapışık kelimeleri ayır ve cümle ortasındaki gereksiz büyük harfleri düzelt.
+            // Bölme önce gelmeli: "Ihad" -> "I had" -> ikinci geçişte "had" küçülür.
+            .let { TextFix.onar(it) }
+            .replace(Regex("\\s+"), " ")
+            .trim()
     }
 
     /**
