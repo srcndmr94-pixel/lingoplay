@@ -1,6 +1,7 @@
 package com.example.subtitles
 
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import java.io.OutputStreamWriter
 import java.net.HttpURLConnection
@@ -17,72 +18,80 @@ object AiTranslate {
         if (text.isBlank()) return@withContext ""
         if (API_KEY.isBlank()) return@withContext "Hata: API Key yok"
 
-        try {
-            val url = URL("$API_URL?key=$API_KEY")
-            val conn = url.openConnection() as HttpURLConnection
-            conn.requestMethod = "POST"
-            conn.setRequestProperty("Content-Type", "application/json")
-            conn.connectTimeout = 5000
-            conn.readTimeout = 5000
-            conn.doOutput = true
+        var attempts = 0
+        while (attempts < 2) {
+            try {
+                val url = URL("$API_URL?key=$API_KEY")
+                val conn = url.openConnection() as HttpURLConnection
+                conn.requestMethod = "POST"
+                conn.setRequestProperty("Content-Type", "application/json")
+                conn.connectTimeout = 5000
+                conn.readTimeout = 5000
+                conn.doOutput = true
 
-            // OCR Hatalarını ve Eksik Çeviriyi Önleyen Sistem Promptu
-            val systemPrompt = """
-                Sen profesyonel bir oyun altyazı çevirmenisin.
-                Sana gelen metin ekran OCR taranmasıdır. Bu yüzden 'If I' kelimesi 'IFL' veya 'Ifl', 'I' harfi 'l' veya '1' olarak hatalı okunmuş olabilir.
+                val systemPrompt = """
+                    Sen profesyonel bir oyun altyazı çevirmenisin.
+                    Sana gelen metin ekran OCR taranmasıdır. Bu yüzden 'If I' kelimesi 'IFL' veya 'Ifl', 'I' harfi 'l' veya '1' olarak hatalı okunmuş olabilir.
 
-                GÖREVİN:
-                1. Metindeki 'IFL', 'Ifl', 'I1' gibi OCR yazım hatalarını derhal 'If I' veya 'I' olarak düzelt.
-                2. Metnin TAMAMINI eksiksiz çevir. Asla cümlenin sonunu atlama.
-                3. Oyun bağlamına uygun doğal Türkçe altyazı dili kullan. 
-                   Örnek: "If I could see Master once more... I could die in peace..." -> "Ustayı bir kez daha görebilseydim... Huzur içinde ölebilirdim..."
-                4. Sadece çevrilmiş Türkçe metni döndür. Not, açıklama veya ek karakter yazma.
-            """.trimIndent()
+                    GÖREVİN:
+                    1. Metindeki 'IFL', 'Ifl', 'I1' gibi OCR yazım hatalarını derhal 'If I' veya 'I' olarak düzelt.
+                    2. Metnin TAMAMINI eksiksiz çevir. Asla cümlenin sonunu atlama.
+                    3. Oyun bağlamına uygun doğal Türkçe altyazı dili kullan. 
+                       Örnek: "If I could see Master once more... I could die in peace..." -> "Ustayı bir kez daha görebilseydim... Huzur içinde ölebilirdim..."
+                    4. Sadece çevrilmiş Türkçe metni döndür. Not, açıklama veya ek karakter yazma.
+                """.trimIndent()
 
-            val jsonBody = JSONObject().apply {
-                val systemInstruction = JSONObject().apply {
-                    val parts = JSONArray().apply {
-                        put(JSONObject().apply { put("text", systemPrompt) })
-                    }
-                    put("parts", parts)
-                }
-                put("system_instruction", systemInstruction)
-
-                val contentsArray = JSONArray().apply {
-                    val contentObj = JSONObject().apply {
-                        val partsArray = JSONArray().apply {
-                            put(JSONObject().apply { put("text", text) })
+                val jsonBody = JSONObject().apply {
+                    val systemInstruction = JSONObject().apply {
+                        val parts = JSONArray().apply {
+                            put(JSONObject().apply { put("text", systemPrompt) })
                         }
-                        put("parts", partsArray)
+                        put("parts", parts)
                     }
-                    put(contentObj)
+                    put("system_instruction", systemInstruction)
+
+                    val contentsArray = JSONArray().apply {
+                        val contentObj = JSONObject().apply {
+                            val partsArray = JSONArray().apply {
+                                put(JSONObject().apply { put("text", text) })
+                            }
+                            put("parts", partsArray)
+                        }
+                        put(contentObj)
+                    }
+                    put("contents", contentsArray)
                 }
-                put("contents", contentsArray)
-            }
 
-            val writer = OutputStreamWriter(conn.outputStream)
-            writer.write(jsonBody.toString())
-            writer.flush()
-            writer.close()
+                val writer = OutputStreamWriter(conn.outputStream)
+                writer.write(jsonBody.toString())
+                writer.flush()
+                writer.close()
 
-            val responseCode = conn.responseCode
-            if (responseCode == HttpURLConnection.HTTP_OK) {
-                val responseText = conn.inputStream.bufferedReader().use { it.readText() }
-                val jsonResponse = JSONObject(responseText)
-                val candidates = jsonResponse.optJSONArray("candidates")
-                if (candidates != null && candidates.length() > 0) {
-                    val candidate = candidates.getJSONObject(0)
-                    val content = candidate.optJSONObject("content")
-                    if (content != null) {
-                        val parts = content.optJSONArray("parts")
-                        if (parts != null && parts.length() > 0) {
-                            return@withContext parts.getJSONObject(0).optString("text", "").trim()
+                val responseCode = conn.responseCode
+                if (responseCode == HttpURLConnection.HTTP_OK) {
+                    val responseText = conn.inputStream.bufferedReader().use { it.readText() }
+                    val jsonResponse = JSONObject(responseText)
+                    val candidates = jsonResponse.optJSONArray("candidates")
+                    if (candidates != null && candidates.length() > 0) {
+                        val candidate = candidates.getJSONObject(0)
+                        val content = candidate.optJSONObject("content")
+                        if (content != null) {
+                            val parts = content.optJSONArray("parts")
+                            if (parts != null && parts.length() > 0) {
+                                return@withContext parts.getJSONObject(0).optString("text", "").trim()
+                            }
                         }
                     }
+                } else if (responseCode == 503) {
+                    // Sunucu yoğunluğunda kısa bir bekleme ekleyip tekrar dene
+                    attempts++
+                    delay(400)
+                    continue
                 }
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
-        } catch (e: Exception) {
-            e.printStackTrace()
+            attempts++
         }
 
         return@withContext ""

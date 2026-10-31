@@ -189,6 +189,8 @@ class CaptureService : Service() {
             .replace("\n", " ")
             .replace(Regex("^IFL\\b", RegexOption.IGNORE_CASE), "If I")
             .replace(Regex("^Ifl\\b"), "If I")
+            .replace(Regex("\\bIfl\\b"), "If I")
+            .replace(Regex("\\bIFL\\b"), "If I")
             .replace(Regex("\\s+"), " ")
             .trim()
 
