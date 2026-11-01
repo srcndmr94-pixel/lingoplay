@@ -1,0 +1,20 @@
+INPUT: lgot Boobie's bricks.
+OUTPUT: I got Boobie's bricks.
+
+INPUT: Lu, push up. Stay wth me.
+OUTPUT: Lu, push up. Stay with me.
+
+INPUT: MnnEI AIn ocn euOTGIIN Fuck Boobie! We gotta get out of this.
+OUTPUT: Fuck Boobie! We gotta get out of this.
+
+INPUT: 10 SHOTGUN Yep. You think he saw us?
+OUTPUT: Yep. You think he saw us?
+
+INPUT: 9 MORE LAND 850 SHOTGUN
+OUTPUT: <DROP>
+
+INPUT: MORE LAND 850 SHOTGUN
+OUTPUT: <DROP>
+
+INPUT: Kurulumu kontrol et
+OUTPUT: <DROP>

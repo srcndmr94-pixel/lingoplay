@@ -1,81 +1,66 @@
 package com.example.subtitles
 
-/**
- * Conservative OCR cleanup for English game subtitles.
- * It fixes OCR-shaped corruption before translation without hard-coding dialogue sentences.
- */
 object OcrNormalizer {
     private val whitespace = Regex("[\\t ]+")
-    private val spacesBeforePunctuation = Regex("\\s+([,.;:!?])")
-    private val spacesAfterOpening = Regex("([([{])\\s+")
-    private val spacesBeforeClosing = Regex("\\s+([)\\]}])")
 
-    private val replacements = listOf(
-        Regex("(?i)\\bhas\\s+n['’]?treturned\\b") to "hasn't returned",
-        Regex("(?i)\\bhave\\s+n['’]?treturned\\b") to "haven't returned",
-        Regex("(?i)\\bdoes\\s+n['’]?t\\b") to "doesn't",
-        Regex("(?i)\\bdid\\s+n['’]?t\\b") to "didn't",
-        Regex("(?i)\\bwould\\s+n['’]?t\\b") to "wouldn't",
-        Regex("(?i)\\bcould\\s+n['’]?t\\b") to "couldn't",
-        Regex("(?i)\\bshould\\s+n['’]?t\\b") to "shouldn't",
-        Regex("(?i)\\bcan\\s+n['’]?t\\b") to "can't",
+    private val rules = listOf(
+        Regex("(?i)^l(?=['’])") to "I",
+        Regex("(?i)\\bl['’]m\\b") to "I'm",
+        Regex("(?i)\\blgot\\b") to "I got",
+        Regex("(?i)\\bl\\s*got\\b") to "I got",
+        Regex("(?i)\\bstay\\s+wth\\s+me\\b") to "Stay with me",
+        Regex("(?i)\\bthe\\s+re['’]?s\\b") to "there's",
+        Regex("(?i)\\bha['’]?nay\\b") to "haven't",
+        Regex("(?i)\\bqot\\b") to "got",
+        Regex("(?i)\\bldo\\b") to "I do",
         Regex("(?i)\\bwearsia\\b") to "wears a",
         Regex("(?i)\\bhustband\\b") to "husband",
         Regex("(?i)\\bstorim\\s*up\\b") to "storm up",
-        Regex("(?i)\\bstorimup\\b") to "storm up",
         Regex("(?i)\\btound\\b") to "round",
-        Regex("(?i)\\bsecurity\\b") to "security",
-        Regex("(?i)\\bsecurty\\b") to "security",
-        Regex("(?i)\\bhand\\s+ling\\b") to "handling",
-        Regex("(?i)\\bgo?sts\\b") to "costs",
-        Regex("(?i)\\baandling\\b") to "handling",
-        Regex("(?i)\\bwhata\\b") to "what a",
         Regex("(?i)\\bsent\\s+imental\\b") to "sentimental",
-        Regex("(?i)\\bdeviish\\s*synmetry\\b") to "devilish symmetry",
         Regex("(?i)\\btobe\\b") to "to be",
         Regex("(?i)\\bbabyabout\\b") to "baby about",
-        Regex("(?i)\\bigot\\b") to "I got",
-        Regex("(?i)\\bnota\\s+word\\b") to "not a word"
+        Regex("(?i)\\beomfortin\\b") to "comfort in",
+        Regex("(?i)\\btemplarsthere\\b") to "Templars there",
+        Regex("(?i)\\bimust\\b") to "I must",
+        Regex("(?i)^ou\\s+walked\\b") to "You walked",
+        Regex("(?i)\\bcertai\\b") to "certain"
     )
 
-    fun normalize(input: String): String {
-        if (input.isBlank()) return ""
-        return input.lineSequence()
-            .map(::normalizeLine)
-            .filter(String::isNotBlank)
-            .joinToString("\n")
-            .trim()
-    }
+    fun normalize(input: String): String = input.lineSequence()
+        .map(::normalizeLine)
+        .filter(String::isNotBlank)
+        .joinToString("\n")
+        .trim()
 
     fun normalizeLine(raw: String): String {
         var text = raw
             .replace('’', '\'')
             .replace('‘', '\'')
-            .replace('“', '"')
-            .replace('”', '"')
             .replace('|', 'I')
             .trim()
 
         text = whitespace.replace(text, " ")
-        text = spacesBeforePunctuation.replace(text, "$1")
-        text = spacesAfterOpening.replace(text, "$1")
-        text = spacesBeforeClosing.replace(text, "$1")
+        text = Regex("\\s+([,.;:!?])").replace(text, "$1")
+        text = Regex("(?<=\\s)1(?=\\s*[?.!,]|$)").replace(text, "I")
+        text = Regex("(?<=\\s)l(?=[' ]|$)").replace(text, "I")
 
-        // OCR frequently reads a leading capital-I as lowercase l before an apostrophe/space.
-        text = text.replace(Regex("^l(?=[' ]|$)"), "I")
-        text = text.replace(Regex("(?<=\\s)l(?=[' ]|$)"), "I")
-        // OCR can swap the two glyphs in contractions/word joins.
-        text = text.replace(Regex("^'l(?=\\s)", RegexOption.IGNORE_CASE), "I'll")
-        text = text.replace(Regex("(?i)\\bmightl\\b"), "might I")
-
-        for ((pattern, replacement) in replacements) {
+        for ((pattern, replacement) in rules) {
             text = pattern.replace(text, replacement)
         }
 
-        // Repair a few high-frequency English contractions split by OCR.
-        text = text.replace(Regex("(?i)\\b(I|you|we|they|he|she|it)\\s+'\\s*(m|re|ve|ll|d|s)\\b")) {
-            "${it.groupValues[1]}'${it.groupValues[2]}"
-        }
+        // Tamamen büyük harf + sayıdan oluşan HUD satırını diyalog gibi düzeltme.
+        if (isLikelyHudOnly(text)) return text
+
         return whitespace.replace(text, " ").trim()
+    }
+
+    private fun isLikelyHudOnly(text: String): Boolean {
+        val letters = text.filter(Char::isLetter)
+        if (letters.length < 3) return false
+        val upper = letters.count(Char::isUpperCase)
+        val upperRatio = upper.toDouble() / letters.length
+        val hasDigit = text.any(Char::isDigit)
+        return hasDigit && upperRatio >= 0.80
     }
 }

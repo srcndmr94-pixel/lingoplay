@@ -168,14 +168,14 @@ class ScreenCaptureService : Service() {
         val cropped = subtitleRoi.crop(screen)
         try {
             val raw = recognizer.recognize(cropped)
-            val normalized = OcrNormalizer.normalize(raw)
+            val cleanedOcr = OcrSourceCleaner.clean(raw)
 
-            if (normalized.isBlank() || SubtitleUiFilter.shouldIgnore(normalized)) {
+            if (cleanedOcr.isBlank() || SubtitleUiFilter.shouldIgnore(cleanedOcr)) {
                 stableCollector.offer("")
                 return
             }
 
-            val stableText = stableCollector.offer(normalized) ?: return
+            val stableText = stableCollector.offer(cleanedOcr) ?: return
             val cleanedSource = NaturalGameTurkishCorrections.cleanSourceText(stableText)
             if (NaturalGameTurkishCorrections.shouldIgnoreSource(cleanedSource)) return
 

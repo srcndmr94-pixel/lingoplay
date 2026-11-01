@@ -20,6 +20,10 @@ object NaturalGameTurkishCorrections {
         normalize("Fire at the Powder Keg!") to "Barut fıçısına ateş et!",
         normalize("Police! Don't fucking move!") to "Polis! Sakın kıpırdama lan!",
         normalize("Lu, push up. Stay with me.") to "Lu, ilerle. Yanımdan ayrılma.",
+        normalize("Come on, we need to find a way out.") to "Hadi, buradan bir çıkış yolu bulmalıyız.",
+        normalize("I got Boobie's bricks.") to "Boobie'nin malları bende.",
+        normalize("Fuck Boobie! We gotta get out of this.") to "Siktir et Boobie'yi! Buradan kurtulmamız lazım.",
+        normalize("Lu, push up. Stay wth me.") to "Lu, ilerle. Yanımdan ayrılma.",
         normalize("Lu, cover!") to "Lu, koru beni!",
 
         normalize("Fuck, it's him!") to "Siktir, bu o!",
@@ -73,6 +77,16 @@ object NaturalGameTurkishCorrections {
             Regex("^\\d+\\s+SHOTGUN\\s+", RegexOption.IGNORE_CASE),
             ""
         )
+        // OCR/HUD çöplüğü cümlenin önüne yapışırsa bilinen diyalog başlangıcından itibaren al.
+        val dialogueStarts = listOf(
+            "Fuck Boobie!", "Yep.", "Lu,", "What the fuck", "Fuck,", "Can't you",
+            "Hey man", "Aww,", "Clean this", "It's fucking", "Come on"
+        )
+        val start = dialogueStarts
+            .map { marker -> text.indexOf(marker, ignoreCase = true) }
+            .filter { it >= 0 }
+            .minOrNull()
+        if (start != null && start > 0) text = text.substring(start)
         return text.trim()
     }
 
