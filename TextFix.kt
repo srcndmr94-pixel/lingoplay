@@ -1,186 +1,664 @@
 package com.example.subtitles
 
-/**
- * OCR'ın yapıştırdığı kelimeleri ayırır ve cümle ortasındaki gereksiz büyük harfleri düzeltir.
- *
- * Kelime kümesi bilinçli olarak KÜÇÜK tutulmuştur (~828 kelime). Büyük bir sözlük bölücüyü
- * kötüleştirir: "notice" -> "no tice" gibi hatalar tam olarak sözlük şiştiğinde çıkar.
- * Küme, işlev kelimeleri ve sık geçen oyun/diyalog sözcükleri üzerine kuruludur.
- *
- * Kümede yer alan her kelime bölünmeye karşı korunur. Bu yüzden "however", "island",
- * "ashore", "whatever" gibi bileşik görünümlü sözcükler listede bulunmak ZORUNDADIR;
- * yoksa "how ever", "is land", "a shore" diye ayrılırlar.
- */
+import java.util.Locale
+import java.util.concurrent.ConcurrentHashMap
+import kotlin.math.abs
+
 object TextFix {
 
-    private val WORDS: Set<String> = """
-        a ablaze aboard about above abroad across aflame afraid after again against ago agree
-        aground ahead aim air alarm alive all allow almost alone along aloud already also alter
-        although altogether always am amid amiss among amount an anchor and anew anger angry ankle
-        another answer any anybody anyhow anyone anything anywhere apart appear are arm army around
-        arrive art as ash ashamed ashes ashore aside ask asleep astern at attack attempt await awake
-        away awhile back backward bay be beach became because become becomes been before began begin
-        begins begun behind being belief believe believed bell below beneath beside best better
-        between beyond blood boat bone both bottle box brave bread breath breathe bridge brother
-        burn but by cage came can cannot captain careful carefully cargo cell cells certain
-        certainly chain chest coast coat coin come comes coming could crew crown cup danger dark day
-        days dead death decent deck deep deserve deserved destroy destroyed destroys destruction did
-        die died distance do dock does doing done door doors down downward dream drink during dust
-        each early earth end ends enemies enemy enough escape escaped even ever every everybody
-        everyone everything everywhere except fail failed fails failure far fast father fear feel
-        feels felt few fight fighting fights find finds finish finished fire first flag fleet flesh
-        floor fog follow followed follows fool for forest forever forget forgive forgiven fortune
-        forward fought found free friend friends from full gate gather gathered get gets getting
-        give given gives glass go goes going gold gone good got grass grave great ground guard had
-        hand hands happen happened happens harbor hard has hate have having he head hear heard heart
-        heaven heavy held hell help her here hers herself hide high highland hill him himself his
-        history hold holds hole home honest honesty honor hook hope hoped horse hour hours house how
-        however hunger i idea idle if ill image imagine imagined important in inch indeed injury ink
-        inland inn inside instead intend interest into inward iron is island it its itself journey
-        judge just keen keep keeps kept key kill killed kills kind king knew knife knot know
-        knowledge known knows ladder lamp land lantern last late later lead learn leave leaves left
-        less lesson let lets letter life light like likes line listen listened listening listens
-        little live lives lock long look looking looks lose loses lost love made mainland make makes
-        making man many map mast master matter matters may me meal mean means meant meanwhile meat
-        men mercy might mind mine minute misunderstand moment money more moreover morning most
-        mother mountain move moves much must my myself name near need needs net never new news next
-        night no nobody none nonetheless nor not nothing notice now nowhere oar oath ocean of off
-        offer offered old on once one only onto onward open opens or order other others otherwise
-        our ours ourselves out outside outward over own pain paper part past path patience pay
-        people perhaps pirate pistol place places plank play please pocket port powder power prepare
-        prepared prison promise promised protect protected pull push put quarter queen question
-        quick quiet rain ran rat rather reach reached read ready real reason remain remained
-        remember remembered remembers respect respected rest return returns right rise river road
-        rock room rope rum run running runs sack safe said sail sailor salt same sand save saw say
-        says scar sea seat second secret see seen sees send sends sent servant set settle settled
-        several shadow shall she shelf ship ships shipwright shirt shore short shot should show
-        shows side sign silence silver since sir sister sit sits skill sky slave sleep slouch slow
-        small smoke snow so soldier some somebody someday somehow someone something sometimes
-        somewhat song soon sorrow sorry soul sound speak spirit spoke spot stair stand stands star
-        stay stays steel step stick still stone stop stops storm story stranger string strong such
-        suffer suffered sun suppose supposed supposes sure surrender sword table take taken takes
-        tale talk talks tell tells temple tent than thank that the their theirs them themselves then
-        there therefore these they thief thing things think thinks thirst this those though thought
-        thread three throat through throughout throw thrown thunder tide time times tired to today
-        together told tomorrow tongue tonight too took tool toward towards tower town trade trail
-        treasure tree tries trouble troubled true trust truth try turn turns two under understand
-        understood until up upon upward urgency us use used valley very victory village voice wait
-        waits walk walks wall want wants war was watch water wave way we weapon weather week welcome
-        well went were what whatever wheel when whenever where wherever which while whisky whisper
-        who whoever whole whom whomever whose why wife will win wind wine winter wish with within
-        without woman wonder wondered wood wool word words work works world worried worry worth
-        would wound wright wrong year years yes yesterday yet you young your yours yourself
-        yourselves
-    """.trimIndent().split(Regex("\\s+")).filter { it.isNotBlank() }.toSet()
+    private const val NO_CORRECTION = "#NONE#"
 
-    /**
-     * Büyük harfi korunacak oyun terimleri. WORDS içinde de bulunabilirler (bölünmeye
-     * karşı koruma için) ama cümle ortasında küçültülmezler: "the Order" tarikat adıdır
-     * ve büyük harf, çevirmene özel isim olduğunu söyler.
-     * AiTranslate sistem istemindeki sözlükle aynı terimleri taşımalıdır.
-     */
-    private val KORUNAN_TERIMLER = setOf(
-        "order", "sect", "transcension", "dao", "qi", "wulin",
-        "creed", "brotherhood", "templar", "assassin"
+    private const val MAX_CACHE_SIZE = 10_000
+    private const val MIN_SPLIT_WORD_LENGTH = 5
+    private const val MIN_SPLIT_PART_LENGTH = 2
+
+    private val WORD_REGEX =
+        Regex("[A-Za-z]+(?:'[A-Za-z]+)?")
+
+    private val TOKEN_REGEX =
+        Regex("[A-Za-z]+(?:'[A-Za-z]+)?|[^A-Za-z]+")
+
+    private val OCR_O_REGEX =
+        Regex("[ỏóôö]")
+
+    private val OCR_EMOJI_REGEX =
+        Regex("[:;][Dd)]")
+
+    private val PROTECTED_TERMS = setOf(
+        "dao",
+        "qi",
+        "wulin",
+        "murim",
+        "dantian",
+        "meridian",
+        "transcension",
+        "templar",
+        "assassin",
+        "brotherhood",
+        "creed"
     )
 
-    private fun bilinen(w: String): Boolean = w.lowercase() in WORDS
+    private val RAW_OCR_RULES = listOf(
+        "oftraining" to "of training",
+        "intothe" to "into the",
+        "hatfar" to "half a",
+        "litle" to "little",
+        "satistied" to "satisfied",
+        "trom" to "from",
+        "inever" to "never",
+        "halfdad" to "half dead",
+        "hal-doad" to "half dead",
+        "hal doad" to "half dead",
+        "hal dead" to "half dead",
+        "half doad" to "half dead",
+        "ha dead" to "half dead",
+        "ratn" to "rain",
+        "mnd" to "mud",
+        "tie mud" to "the mud"
+    )
 
-    /**
-     * Tek bir kelimeyi ikiye böler; YALNIZCA her iki parça da bilinen kelimeyse.
-     * Zaten bilinen bir kelimeye hiç dokunmaz.
+    private data class OcrRule(
+        val pattern: Regex,
+        val replacement: String
+    )
+
+    /*
+     * Kurallar bir kez derlenir. Her onar() çağrısında yeniden
+     * Regex oluşturulmaz.
      */
-    private fun ikiyeBol(kelime: String): Pair<String, String>? {
-
-        val k = kelime.lowercase()
-
-        if (k.length < 4) return null
-        if (bilinen(k)) return null
-
-        var enIyiPuan = -1
-        var enIyiKesim = -1
-
-        for (i in 1 until k.length) {
-
-            val sol = k.substring(0, i)
-            val sag = k.substring(i)
-
-            if (!bilinen(sol) || !bilinen(sag)) continue
-
-            // Tek harfli parça yalnızca "i" veya "a" olabilir
-            if (sol.length == 1 && sol != "i" && sol != "a") continue
-            if (sag.length == 1 && sag != "i" && sag != "a") continue
-
-            // İki harf + iki harf bölmeleri güvenilmez ("no" + "te")
-            if (sol.length == 2 && sag.length == 2) continue
-
-            // Dengeli bölme tercih edilir
-            val puan = minOf(sol.length, sag.length)
-            if (puan > enIyiPuan) {
-                enIyiPuan = puan
-                enIyiKesim = i
-            }
-        }
-
-        if (enIyiKesim < 0) return null
-
-        return kelime.substring(0, enIyiKesim) to kelime.substring(enIyiKesim)
-    }
-
-    /** Metindeki yapışık kelimeleri ayırır: "Ihad" -> "I had", "cannotfail" -> "cannot fail". */
-    fun kelimeleriAyir(metin: String): String {
-        return Regex("[A-Za-z]+").replace(metin) { eslesme ->
-            val w = eslesme.value
-            val bolme = ikiyeBol(w)
-            if (bolme == null) w else "${bolme.first} ${bolme.second}"
-        }
-    }
-
-    /**
-     * Cümle ortasındaki, bilinen bir İngilizce kelime olan büyük harfli sözcükleri küçültür.
-     * Kümede olmayanlar (Kenway, Jackdaw gibi özel isimler) dokunulmadan kalır.
-     *
-     * OCR ve bazı oyunlar "a decent Drink", "damned Cell for Days" gibi satırlar üretiyor;
-     * çevirmen bu sözcükleri özel isim sanıp anlamı bozuyordu.
-     */
-    fun buyukHarfDuzelt(metin: String): String {
-
-        val sonuc = StringBuilder(metin.length)
-        var cumleBasi = true
-
-        for (parca in Regex("[A-Za-z']+|[^A-Za-z']+").findAll(metin)) {
-
-            var p = parca.value
-
-            if (p.first().isLetter() || p.first() == '\'') {
-
-                val govdesi = p.drop(1)
-
-                if (!cumleBasi &&
-                    p.first().isUpperCase() &&
-                    govdesi.isNotEmpty() &&
-                    govdesi == govdesi.lowercase() &&
-                    bilinen(p) &&
-                    p.lowercase() !in KORUNAN_TERIMLER &&
-                    p != "I"
+    private val OCR_RULES: List<OcrRule> =
+        RAW_OCR_RULES
+            .sortedByDescending { (source, _) -> source.length }
+            .map { (source, replacement) ->
+                val expression = if (
+                    source.any(Char::isWhitespace) ||
+                    '-' in source
                 ) {
-                    p = p.first().lowercaseChar() + p.drop(1)
+                    Regex.escape(source)
+                } else {
+                    "\\b${Regex.escape(source)}\\b"
                 }
 
-                cumleBasi = false
-
-            } else if (p.any { it == '.' || it == '!' || it == '?' }) {
-                cumleBasi = true
+                OcrRule(
+                    pattern = Regex(
+                        expression,
+                        RegexOption.IGNORE_CASE
+                    ),
+                    replacement = replacement
+                )
             }
 
-            sonuc.append(p)
-        }
+    private val WORDS: Set<String> =
+        loadWords()
 
-        return sonuc.toString()
+    /*
+     * Yakın kelime aramasında yalnızca uygun uzunluktaki
+     * adayların incelenmesini sağlar.
+     */
+    private val WORDS_BY_LENGTH: Map<Int, List<String>> =
+        WORDS
+            .groupBy { it.length }
+            .mapValues { (_, words) -> words.sorted() }
+
+    private val correctionCache =
+        ConcurrentHashMap<String, String>()
+
+    private val splitCache =
+        ConcurrentHashMap<String, Pair<String, String>>()
+
+    private val NO_SPLIT =
+        "#NONE#" to "#NONE#"
+
+    private fun loadWords(): Set<String> {
+        val common = setOf(
+            "a", "an", "the", "of", "to", "in", "for", "on", "with",
+            "at", "by", "from", "and", "or", "but", "if", "as", "is",
+            "are", "was", "were", "be", "been", "being", "have", "has",
+            "had", "do", "does", "did", "will", "would", "can", "could",
+            "should", "may", "might", "must", "shall",
+
+            "this", "that", "these", "those", "i", "you", "he", "she",
+            "it", "we", "they", "me", "him", "her", "us", "them", "my",
+            "your", "his", "its", "our", "their", "mine", "yours",
+            "hers", "ours", "theirs",
+
+            "what", "which", "who", "whom", "whose", "where", "when",
+            "why", "how", "all", "any", "both", "each", "few", "more",
+            "most", "other", "some", "such", "no", "nor", "not", "only",
+            "own", "same", "so", "than", "too", "very",
+
+            "just", "also", "now", "here", "there", "then", "once",
+            "again", "even", "still", "one", "two", "three", "four",
+            "five", "first", "second", "last", "next", "new", "old",
+
+            "good", "bad", "big", "small", "long", "short", "high",
+            "low", "great", "little", "much", "many", "man", "woman",
+            "child", "person", "people", "time", "day", "year", "way",
+            "life", "world", "hand", "part", "place", "case", "week",
+            "company", "system", "program", "question", "work",
+            "government", "number", "night", "point", "home", "water",
+            "room", "mother", "area", "money", "story", "fact", "month",
+            "lot", "right", "study", "book", "eye", "job", "word",
+            "business", "issue", "side", "kind", "head", "house",
+            "service", "friend", "father", "power", "hour", "game",
+            "line", "end", "member", "law", "car", "city", "community",
+            "name", "president", "team", "minute", "idea", "kid", "body",
+            "information", "back", "parent", "face", "others", "level",
+            "office", "door", "health", "art", "war", "history", "party",
+            "result", "change", "morning", "reason", "research", "girl",
+            "guy", "moment", "air", "teacher", "force", "education",
+
+            "training", "into", "half", "dead", "rain", "mud",
+            "satisfied", "never", "said", "use", "up", "about", "out",
+            "make", "like", "look", "write", "go", "see", "get", "come",
+            "made", "call", "find", "down", "oil"
+        )
+
+        return (common + PROTECTED_TERMS)
+            .asSequence()
+            .map(::normalizeWord)
+            .toSet()
     }
 
-    /** İki geçişi sırayla uygular. Bölme önce gelmeli: "Ihad" -> "I had" -> "had". */
-    fun onar(metin: String): String {
-        return buyukHarfDuzelt(kelimeleriAyir(metin))
+    private fun normalizeWord(word: String): String =
+        word.lowercase(Locale.ROOT)
+
+    private fun known(word: String): Boolean =
+        normalizeWord(word) in WORDS
+
+    private fun isProtectedTerm(word: String): Boolean =
+        normalizeWord(word) in PROTECTED_TERMS
+
+    private fun preserveCase(
+        original: String,
+        replacement: String
+    ): String {
+        val letters = original.filter(Char::isLetter)
+
+        return when {
+            letters.isNotEmpty() &&
+                letters.all(Char::isUpperCase) -> {
+                replacement.uppercase(Locale.ROOT)
+            }
+
+            original.firstOrNull()?.isUpperCase() == true -> {
+                replacement.replaceFirstChar { character ->
+                    character.titlecase(Locale.ROOT)
+                }
+            }
+
+            else -> replacement
+        }
+    }
+
+    private fun applyOcrRules(text: String): String {
+        var result = text
+
+        for (rule in OCR_RULES) {
+            result = rule.pattern.replace(result) { match ->
+                preserveCase(
+                    original = match.value,
+                    replacement = rule.replacement
+                )
+            }
+        }
+
+        return result
+            .replace(OCR_O_REGEX, "o")
+            .replace(OCR_EMOJI_REGEX, "")
+    }
+
+    /*
+     * Belirtilen üst sınırdan daha uzak kelimelerde hesaplamayı
+     * mümkün olduğunca erken durdurur.
+     */
+    private fun levenshtein(
+        first: String,
+        second: String,
+        maxDistance: Int
+    ): Int {
+        if (first == second) {
+            return 0
+        }
+
+        if (abs(first.length - second.length) > maxDistance) {
+            return maxDistance + 1
+        }
+
+        if (first.isEmpty()) {
+            return if (second.length <= maxDistance) {
+                second.length
+            } else {
+                maxDistance + 1
+            }
+        }
+
+        if (second.isEmpty()) {
+            return if (first.length <= maxDistance) {
+                first.length
+            } else {
+                maxDistance + 1
+            }
+        }
+
+        /*
+         * Kısa kelimenin sütun olarak kullanılması daha az bellek
+         * tüketir.
+         */
+        val rows: String
+        val columns: String
+
+        if (first.length >= second.length) {
+            rows = first
+            columns = second
+        } else {
+            rows = second
+            columns = first
+        }
+
+        var previous =
+            IntArray(columns.length + 1) { index -> index }
+
+        var current =
+            IntArray(columns.length + 1)
+
+        for (rowIndex in rows.indices) {
+            current[0] = rowIndex + 1
+            var rowMinimum = current[0]
+
+            for (columnIndex in columns.indices) {
+                val substitutionCost =
+                    if (rows[rowIndex] == columns[columnIndex]) {
+                        0
+                    } else {
+                        1
+                    }
+
+                current[columnIndex + 1] = minOf(
+                    current[columnIndex] + 1,
+                    previous[columnIndex + 1] + 1,
+                    previous[columnIndex] + substitutionCost
+                )
+
+                rowMinimum = minOf(
+                    rowMinimum,
+                    current[columnIndex + 1]
+                )
+            }
+
+            if (rowMinimum > maxDistance) {
+                return maxDistance + 1
+            }
+
+            val temporary = previous
+            previous = current
+            current = temporary
+        }
+
+        return previous.last()
+    }
+
+    /*
+     * Kısa kelimelerde yanlış düzeltme ihtimali daha yüksektir.
+     */
+    private fun maxCorrectionDistance(wordLength: Int): Int {
+        return when {
+            wordLength <= 3 -> 0
+            wordLength <= 5 -> 1
+            else -> 2
+        }
+    }
+
+    private fun nearestWord(word: String): String? {
+        val normalized = normalizeWord(word)
+
+        if (known(normalized)) {
+            return normalized
+        }
+
+        val maxDistance =
+            maxCorrectionDistance(normalized.length)
+
+        if (maxDistance == 0) {
+            return null
+        }
+
+        var bestWord: String? = null
+        var bestDistance = maxDistance + 1
+        var equallyGoodCandidates = 0
+
+        val minimumLength =
+            maxOf(1, normalized.length - maxDistance)
+
+        val maximumLength =
+            normalized.length + maxDistance
+
+        for (length in minimumLength..maximumLength) {
+            val candidates =
+                WORDS_BY_LENGTH[length].orEmpty()
+
+            for (candidate in candidates) {
+                val distance = levenshtein(
+                    first = normalized,
+                    second = candidate,
+                    maxDistance = minOf(
+                        maxDistance,
+                        bestDistance
+                    )
+                )
+
+                when {
+                    distance > maxDistance -> {
+                        // Uygun aday değil.
+                    }
+
+                    distance < bestDistance -> {
+                        bestWord = candidate
+                        bestDistance = distance
+                        equallyGoodCandidates = 1
+                    }
+
+                    distance == bestDistance &&
+                        candidate != bestWord -> {
+                        equallyGoodCandidates++
+                    }
+                }
+            }
+        }
+
+        /*
+         * Aynı uzaklıkta birden fazla kelime varsa rastgele bir
+         * seçim yapmak yerine orijinal kelime korunur.
+         */
+        return if (equallyGoodCandidates == 1) {
+            bestWord
+        } else {
+            null
+        }
+    }
+
+    private fun cacheCorrection(
+        key: String,
+        correction: String?
+    ) {
+        /*
+         * Önbellek dolduğunda tüm kayıtları silmek ani performans
+         * düşüşü oluşturabilir. Bunun yerine yeni kayıt eklenmez.
+         */
+        if (
+            correctionCache.size < MAX_CACHE_SIZE ||
+            correctionCache.containsKey(key)
+        ) {
+            correctionCache.putIfAbsent(
+                key,
+                correction ?: NO_CORRECTION
+            )
+        }
+    }
+
+    private fun nearestWordCached(word: String): String? {
+        val key = normalizeWord(word)
+
+        correctionCache[key]?.let { cached ->
+            return if (cached == NO_CORRECTION) {
+                null
+            } else {
+                cached
+            }
+        }
+
+        val correction = nearestWord(key)
+
+        cacheCorrection(
+            key = key,
+            correction = correction
+        )
+
+        return correction
+    }
+
+    private fun spellingFix(text: String): String {
+        return WORD_REGEX.replace(text) { match ->
+            val original = match.value
+            val normalized = normalizeWord(original)
+
+            when {
+                isProtectedTerm(original) -> {
+                    original
+                }
+
+                /*
+                 * Küçük sözlükle apostroflu kelimeleri düzeltmek
+                 * güvenilir değildir.
+                 */
+                '\'' in original -> {
+                    original
+                }
+
+                /*
+                 * Üç veya daha az karakterli kelimelerde düzeltme
+                 * yapılmaz.
+                 */
+                normalized.length <= 3 -> {
+                    original
+                }
+
+                else -> {
+                    val correction =
+                        nearestWordCached(normalized)
+
+                    if (correction == null) {
+                        original
+                    } else {
+                        preserveCase(
+                            original = original,
+                            replacement = correction
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    private fun cacheSplit(
+        key: String,
+        split: Pair<String, String>?
+    ) {
+        if (
+            splitCache.size < MAX_CACHE_SIZE ||
+            splitCache.containsKey(key)
+        ) {
+            splitCache.putIfAbsent(
+                key,
+                split ?: NO_SPLIT
+            )
+        }
+    }
+
+    private fun splitWord(
+        word: String
+    ): Pair<String, String>? {
+        val key = normalizeWord(word)
+
+        splitCache[key]?.let { cached ->
+            return if (cached == NO_SPLIT) {
+                null
+            } else {
+                cached
+            }
+        }
+
+        if (
+            key.length < MIN_SPLIT_WORD_LENGTH ||
+            known(key) ||
+            isProtectedTerm(key) ||
+            '\'' in key
+        ) {
+            cacheSplit(key, null)
+            return null
+        }
+
+        var bestIndex = -1
+        var bestScore = Int.MIN_VALUE
+        var equallyGoodSplits = 0
+
+        val finalIndex =
+            key.length - MIN_SPLIT_PART_LENGTH
+
+        for (index in MIN_SPLIT_PART_LENGTH..finalIndex) {
+            val left = key.substring(0, index)
+            val right = key.substring(index)
+
+            if (!known(left) || !known(right)) {
+                continue
+            }
+
+            val shortestPart =
+                minOf(left.length, right.length)
+
+            val balancePenalty =
+                abs(left.length - right.length)
+
+            /*
+             * Uzun ve dengeli parçalara öncelik verir.
+             */
+            val score =
+                shortestPart * 10 - balancePenalty
+
+            when {
+                score > bestScore -> {
+                    bestScore = score
+                    bestIndex = index
+                    equallyGoodSplits = 1
+                }
+
+                score == bestScore -> {
+                    equallyGoodSplits++
+                }
+            }
+        }
+
+        /*
+         * Birden fazla eşit sonuç varsa bölme uygulanmaz.
+         */
+        val result =
+            if (bestIndex < 0 || equallyGoodSplits != 1) {
+                null
+            } else {
+                word.substring(0, bestIndex) to
+                    word.substring(bestIndex)
+            }
+
+        cacheSplit(
+            key = key,
+            split = result
+        )
+
+        return result
+    }
+
+    private fun splitWords(text: String): String {
+        return WORD_REGEX.replace(text) { match ->
+            val original = match.value
+            val split = splitWord(original)
+
+            if (split == null) {
+                original
+            } else {
+                "${split.first} ${split.second}"
+            }
+        }
+    }
+
+    private fun normalizeCapitals(text: String): String {
+        val result = StringBuilder(text.length)
+        var sentenceStart = true
+
+        for (match in TOKEN_REGEX.findAll(text)) {
+            var token = match.value
+
+            if (token.firstOrNull()?.isLetter() == true) {
+                val normalized =
+                    normalizeWord(token)
+
+                token = when {
+                    /*
+                     * İngilizcedeki "I" zamiri her zaman büyük yazılır.
+                     */
+                    normalized == "i" -> {
+                        "I"
+                    }
+
+                    /*
+                     * Korunan terimlerin mevcut yazımı değiştirilmez.
+                     */
+                    isProtectedTerm(normalized) -> {
+                        token
+                    }
+
+                    /*
+                     * Cümle başındaki bilinen kelime büyük harfle
+                     * başlatılır.
+                     */
+                    sentenceStart && known(normalized) -> {
+                        normalized.replaceFirstChar { character ->
+                            character.titlecase(Locale.ROOT)
+                        }
+                    }
+
+                    /*
+                     * Cümle içindeki bilinen genel kelimelerde gereksiz
+                     * büyük harf kaldırılır.
+                     */
+                    !sentenceStart && known(normalized) -> {
+                        normalized
+                    }
+
+                    /*
+                     * Sözlükte bulunmayan özel adların yazımı korunur.
+                     */
+                    else -> {
+                        token
+                    }
+                }
+
+                sentenceStart = false
+            } else if (token.any(::isSentenceTerminator)) {
+                sentenceStart = true
+            }
+
+            result.append(token)
+        }
+
+        return result.toString()
+    }
+
+    private fun isSentenceTerminator(
+        character: Char
+    ): Boolean {
+        return character == '.' ||
+            character == '?' ||
+            character == '!'
+    }
+
+    /**
+     * OCR kaynaklı İngilizce altyazı hatalarını düzeltir.
+     *
+     * İşlem sırası:
+     * 1. Bilinen OCR hatalarını düzeltir.
+     * 2. Birleşmiş kelimeleri ayırır.
+     * 3. Yazım hatalarını düzeltir.
+     * 4. Büyük-küçük harfleri normalleştirir.
+     */
+    fun onar(text: String): String {
+        if (text.isBlank()) {
+            return text
+        }
+
+        return text
+            .let(::applyOcrRules)
+            .let(::splitWords)
+            .let(::spellingFix)
+            .let(::normalizeCapitals)
     }
 }
