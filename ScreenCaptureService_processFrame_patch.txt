@@ -1,0 +1,11 @@
+Replace the lines after stableText with:
+
+val cleanedSource = GameTurkishFinalizer.cleanSource(stableText)
+if (cleanedSource.isBlank()) return
+val rawTranslation = runtime.processor.process(cleanedSource, 42)
+if (rawTranslation.isNullOrBlank()) return
+val translated = GameTurkishFinalizer.polish(cleanedSource, rawTranslation)
+if (translated.isBlank()) return
+Log.d("SubtitleCapture", "OKUNAN: $cleanedSource")
+Log.d("SubtitleCapture", "HAM_CEVIRI: $rawTranslation")
+Log.d("SubtitleCapture", "YAZILAN: $translated")
