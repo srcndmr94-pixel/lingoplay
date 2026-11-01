@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Translation bubbles -->
+    <path android:fillColor="#096BFF"
+        android:pathData="M25,25C25,20 29,17 34,17H50C55,17 59,20 59,25V38C59,43 55,46 50,46H40L34,52V46H34C29,46 25,43 25,38Z" />
+    <path android:fillColor="#16D7D2"
+        android:pathData="M51,28C51,23 55,20 60,20H76C81,20 84,23 84,28V41C84,46 81,49 76,49H69V55L63,49H60C55,49 51,46 51,41Z" />
+
+    <!-- A -->
+    <path android:fillColor="#FFFFFF"
+        android:pathData="M34,39L40,23H45L51,39H47L46,35H39L38,39ZM40,32H45L42.5,26Z" />
+
+    <!-- Simplified translation glyph -->
+    <path android:fillColor="#FFFFFF"
+        android:pathData="M59,27H75V31H69C68.5,34 67.3,36.6 65.5,38.7C67.4,40.2 69.6,41.3 72,42L70.5,45.5C67.5,44.5 65,43.1 62.8,41.2C60.9,42.8 58.8,44.1 56.5,45L55,41.7C57,41 58.8,40 60.4,38.7C59.1,37.1 58,35.2 57.2,33.2L60.5,32C61.1,33.5 61.9,34.8 62.9,36C64.1,34.6 64.9,33 65.3,31H59ZM64.5,23H68.5V28H64.5Z" />
+
+    <!-- Exchange arrows -->
+    <path android:fillColor="#40E8FF"
+        android:pathData="M43,13C51,10 61,11 68,16L65,19C60,15 52,14 45,16L47,20L37,18L41,9Z" />
+    <path android:fillColor="#40E8FF"
+        android:pathData="M66,55C58,59 49,58 42,53L45,50C50,54 58,55 64,52L62,48L72,50L68,59Z" />
+
+    <!-- Gamepad -->
+    <path android:fillColor="#071523" android:strokeColor="#28DFFF" android:strokeWidth="2"
+        android:pathData="M28,57C22,57 18,61 16,67L12,82C11,88 17,91 21,87L30,78H78L87,87C91,91 97,88 96,82L92,67C90,61 86,57 80,57H69L65,62H43L39,57Z" />
+
+    <!-- D-pad -->
+    <path android:fillColor="#49E9FF"
+        android:pathData="M28,65H33V70H38V75H33V80H28V75H23V70H28Z" />
+
+    <!-- Face buttons -->
+    <path android:fillColor="#16D7D2" android:pathData="M79,66A3,3 0,1 1,79,72A3,3 0,1 1,79,66" />
+    <path android:fillColor="#32A7FF" android:pathData="M85,72A3,3 0,1 1,85,78A3,3 0,1 1,85,72" />
+    <path android:fillColor="#16D7D2" android:pathData="M73,72A3,3 0,1 1,73,78A3,3 0,1 1,73,72" />
+
+    <!-- Sticks -->
+    <path android:fillColor="#0D2940" android:strokeColor="#49E9FF" android:strokeWidth="1.5"
+        android:pathData="M45,72A5,5 0,1 1,45,82A5,5 0,1 1,45,72" />
+    <path android:fillColor="#0D2940" android:strokeColor="#49E9FF" android:strokeWidth="1.5"
+        android:pathData="M63,72A5,5 0,1 1,63,82A5,5 0,1 1,63,72" />
+</vector>
