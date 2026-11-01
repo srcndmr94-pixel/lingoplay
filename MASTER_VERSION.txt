@@ -1,0 +1,9 @@
+SubtitlesProject Android MASTER
+Build line: MASTER-2026-11-01
+AGP: 8.7.3
+Gradle target: 8.9
+Kotlin: 2.4.21
+JDK target: 17
+compileSdk/targetSdk: 35
+Includes: MediaProjection screen capture, bottom-center ROI, bundled ML Kit OCR, offline translation, subtitle overlay, OCR/noise/context fixes, API-key secure storage, unit and instrumented tests.
+Note: Run the root wrapper task in Android Studio once to generate the real gradlew, gradlew.bat and gradle-wrapper.jar files.
