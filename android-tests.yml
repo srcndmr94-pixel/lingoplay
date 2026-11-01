@@ -1,0 +1,28 @@
+name: Android unit tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Check Gradle Wrapper
+        id: wrapper
+        shell: bash
+        run: |
+          if [ -f ./gradlew ] && [ -f ./gradle/wrapper/gradle-wrapper.jar ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "Gradle Wrapper is not committed yet. Generate it with Gradle 8.9 using: gradle wrapper --gradle-version 8.9"
+          fi
+      - name: Run unit tests
+        if: steps.wrapper.outputs.present == 'true'
+        run: ./gradlew test
