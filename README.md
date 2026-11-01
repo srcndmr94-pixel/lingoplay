@@ -1,14 +1,26 @@
-# SubtitlesProject
+# SubtitlesProjectFinal
 
-Jetpack Compose örnek projesi.
+Derlenebilir Jetpack Compose proje yapısı.
 
-Özellikler:
-- İngilizce OCR metin düzeltme (`TextFix`)
-- Türkçe çeviri sonrası düzeltme (`TurkishTextFix`)
-- 30-60 karakter arası altyazı satır uzunluğu
-- DataStore ile kalıcı ayar
-- ViewModel + Factory
-- Canlı önizleme
-- Cihaz açık/koyu temasını takip etme ve renk animasyonu
+İçerik:
+- TextFix: OCR düzeltme
+- SoundCaptionFix: yerel ses/müzik açıklaması çevirisi
+- SubtitleProcessor: tekrar önleme, 220 ms debounce, bağlam tamponu
+- TurkishTextFix: bağlamsal Türkçe düzeltme ve satır sınırı
+- DataStore + ViewModel + Factory
+- Slider ve canlı önizleme
+- Sistem temasını algılama ve animasyonlu geçiş
 
-Not: OCR ve çeviri motoru entegrasyonu bu örnek projede yer almamaktadır; `TextFix.onar()` ve `TurkishTextFix.onar()` entegrasyon noktaları olarak hazırdır.
+## Çeviri motoru entegrasyonu
+
+`SubtitleTranslator` arayüzünü kendi çeviri motorunuzla uygulayın:
+
+```kotlin
+val translator = SubtitleTranslator { source, context ->
+    yourTranslator.translate(source, context)
+}
+```
+
+Ardından gerçek OCR sonucunu `LiveSubtitleViewModel.onOcrText(rawText)` metoduna iletin.
+
+Not: Proje gerçek OCR/kamera ve gerçek çeviri SDK'sını bilerek dahil etmez; bu servislerin anahtarları ve sağlayıcısı projeye özeldir.
