@@ -29,6 +29,10 @@ object OcrTextCleaner {
         t = loneL.replace(t, "I")
         t = loneOneBeforeApostrophe.replace(t, "I")
         t = ivePattern.replace(t) { "I've ${it.groupValues[1]} ${it.groupValues[2]}" }
+        t = t.replace(Regex("^[|l]\\s*(?=I\\b)"), "")           // "|I already" -> "I already"
+        t = t.replace(Regex("^[T|l](?=(already|always|never|just|am|was)\\b)"), "I ") // "Talready" -> "I already"
+        t = t.replace(Regex("(?i)\\bthe y(?=['’]?(re|ll|ve|d)\\b)"), "they") // "the y're" -> "they're"
+        t = t.replace(Regex("(?i)\\bthe y\\b"), "they")
         if (droppedI.containsMatchIn(t)) t = "I $t"
         return t
     }
@@ -303,6 +307,9 @@ get over here = Gel buraya
 @Lu
 @Boobie
 @Méndez
+@Ray
+@Raymond
+@cabrón
 
 # --- Oyuna özel (sizin kayıttan)
 it's him = O
@@ -316,6 +323,20 @@ clean this shit up = Bu boku temizleyin
 i've always been there for you = Hep yanında oldum
 but this is what i get = Karşılığında aldığım bu mu yani
 but this what i get = Karşılığında aldığım bu mu yani
+
+aight hold up = Tamam, bekle
+yeah he fucking knows = Evet, o kesinlikle biliyor
+what the fuck you talking about = Ne bok konuşuyorsun sen
+what the fuck are you talking about = Ne bok konuşuyorsun sen
+my partner's off the grid right now you feel me = Ortağım şu an ortalarda yok, anlıyorsun ya
+problem is he only worried about himself = Sorun şu ki sadece kendini düşünüyor
+he seriously sent y'all over here right now = Sizi gerçekten şimdi buraya mı gönderdi
+let's get these workers out of here man = Bu işçileri buradan çıkaralım dostum
+i already told that motherfucker what the fuck is going on man = O orospu çocuğuna neler olduğunu zaten söyledim dostum
+i already told that motherfucker what the fuck going on man = O orospu çocuğuna neler olduğunu zaten söyledim dostum
+these two say they're for boobie = Bu ikisi Boobie için geldiklerini söylüyor
+yo = Hey
+raymond listen very closely = Raymond, çok dikkatli dinle
 """
     }
 }
@@ -347,6 +368,10 @@ object SlangNormalizer {
         "\\btryna\\b" to "trying to",
         "\\bfinna\\b" to "about to",
         "\\bya\\b" to "you",
+        "\\byou feel me\\b" to "you understand me",
+        "\\baight\\b" to "alright",
+        "\\byo\\b" to "hey",
+        "\\bhold up\\b" to "wait",
         "\\bnah\\b" to "no",
         "(?<![\\p{L}])'bout\\b" to "about",
         "(?<![\\p{L}])'til\\b" to "until",
@@ -515,7 +540,7 @@ class EnhancedOfflineTranslationEngine(
             if (known != null) {
                 val isGlossary = resolved[i] != null
                 var text = if (i > 0 && isGlossary && !glossary.startsWithName(known)) lowerFirst(known) else known
-                if (i == parts.lastIndex && isGlossary) text += punct
+                if (i == parts.lastIndex) text += punct
                 out += text
                 i++
             } else {
