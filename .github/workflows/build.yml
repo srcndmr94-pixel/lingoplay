@@ -131,6 +131,13 @@ jobs:
             git submodule update --init --depth 1 "$m" || git submodule update --init "$m"
           done
 
+      - name: Gerekli araclar (protoc)
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q protobuf-compiler python3-protobuf
+          protoc --version
+          python3 -c "import google.protobuf as p; print('python protobuf', p.__version__)"
+
       - name: GameLingo yamasi
         run: python3 kaynak/ps5/yama.py chiaki-ng kaynak/ps5
 
