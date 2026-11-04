@@ -4,7 +4,7 @@ on:
     branches: [main]
   workflow_dispatch:
 
-# Üç iş birbirinden bağımsız: biri hata verse diğerleri yine çıktı üretir.
+# Dört iş birbirinden bağımsız: biri hata verse diğerleri yine çıktı üretir.
 
 jobs:
   # ------------------------------------------------ telefon uygulaması (APK)
@@ -91,6 +91,64 @@ jobs:
         with:
           name: 2-TV-APK-${{ github.run_number }}
           path: kaynak/tv/build/outputs/apk/debug/tv-debug.apk
+          if-no-files-found: error
+
+  # ------------------------------------- PS5 oyun uygulaması (GameLingo PS5)
+  # chiaki-ng'nin (açık kaynak PS5 Remote Play) Android uygulamasını indirir,
+  # GameLingo yamasını uygular (altyazı okuma + çeviri) ve APK yapar.
+  ps5:
+    name: PS5 APK
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Kaynagi ac
+        shell: bash
+        run: |
+          set -e
+          ZIP=$(git log --name-only --pretty=format: -n 50 \
+                | grep -iE '\.zip$' | grep -iE 'lingoplay|altyazi' | head -n 1 || true)
+          if [ -z "$ZIP" ] || [ ! -f "$ZIP" ]; then
+            ZIP=$(ls -t *.zip 2>/dev/null | head -n 1)
+          fi
+          echo "Kaynak: $ZIP"
+          rm -rf kaynak && mkdir kaynak
+          unzip -q "$ZIP" -d kaynak
+          ls kaynak/ps5
+
+      - name: chiaki-ng indir
+        shell: bash
+        run: |
+          set -e
+          git init -q chiaki-ng
+          cd chiaki-ng
+          git remote add origin https://github.com/streetpea/chiaki-ng
+          git fetch -q --depth 1 origin 43728af2e639fecb8a7af1cd68c29820a40de973
+          git checkout -q FETCH_HEAD
+          for m in third-party/nanopb third-party/jerasure third-party/gf-complete third-party/curl; do
+            git submodule update --init --depth 1 "$m" || git submodule update --init "$m"
+          done
+
+      - name: GameLingo yamasi
+        run: python3 kaynak/ps5/yama.py chiaki-ng kaynak/ps5
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Derle
+        working-directory: chiaki-ng/android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon --stacktrace
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: 4-PS5-APK-${{ github.run_number }}
+          path: chiaki-ng/android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
 
   # --------------------------------------------------- bilgisayar uygulaması
