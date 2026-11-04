@@ -1,11 +1,10 @@
-name: LingoPlay
+name: GameLingo
 on:
   push:
     branches: [main]
   workflow_dispatch:
 
-# Üç uygulamayı da bu tek dosya derliyor. İşler birbirinden bağımsız:
-# biri hata verse diğerleri yine de çıktı üretir.
+# Üç iş birbirinden bağımsız: biri hata verse diğerleri yine çıktı üretir.
 
 jobs:
   # ------------------------------------------------ telefon uygulaması (APK)
@@ -42,12 +41,56 @@ jobs:
 
       - name: Derle
         working-directory: kaynak
-        run: gradle assembleDebug --no-daemon --stacktrace
+        run: gradle :app:assembleDebug --no-daemon --stacktrace
 
       - uses: actions/upload-artifact@v4
         with:
           name: 1-Telefon-APK-${{ github.run_number }}
           path: kaynak/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+
+  # --------------------------------------------- Android TV uygulaması (APK)
+  tv:
+    name: TV APK
+    runs-on: ubuntu-latest
+    env:
+      GAMELINGO_TV: "1"
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Kaynagi ac
+        shell: bash
+        run: |
+          set -e
+          ZIP=$(git log --name-only --pretty=format: -n 50 \
+                | grep -iE '\.zip$' | grep -iE 'lingoplay|altyazi' | head -n 1 || true)
+          if [ -z "$ZIP" ] || [ ! -f "$ZIP" ]; then
+            ZIP=$(ls -t *.zip 2>/dev/null | head -n 1)
+          fi
+          echo "Kaynak: $ZIP"
+          rm -rf kaynak && mkdir kaynak
+          unzip -q "$ZIP" -d kaynak
+          ls kaynak/tv
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 8.7
+
+      - name: Derle
+        working-directory: kaynak
+        run: gradle :tv:assembleDebug --no-daemon --stacktrace
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: 2-TV-APK-${{ github.run_number }}
+          path: kaynak/tv/build/outputs/apk/debug/tv-debug.apk
           if-no-files-found: error
 
   # --------------------------------------------------- bilgisayar uygulaması
@@ -89,129 +132,6 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: 2-Bilgisayar-EXE-${{ github.run_number }}
+          name: 3-Bilgisayar-EXE-${{ github.run_number }}
           path: dist/LingoPlay.exe
-          if-no-files-found: error
-
-  # -------------------------------------- kendi Remote Play uygulamamız (APK)
-  remote:
-    name: Remote APK
-    runs-on: ubuntu-latest
-    timeout-minutes: 90
-    steps:
-      - uses: actions/checkout@v5
-        with:
-          fetch-depth: 0
-
-      - name: Kaynagi ac
-        shell: bash
-        run: |
-          set -e
-          ZIP=$(git log --name-only --pretty=format: -n 50 \
-                | grep -iE '\.zip$' | grep -iE 'lingoplay|altyazi' | head -n 1 || true)
-          if [ -z "$ZIP" ] || [ ! -f "$ZIP" ]; then
-            ZIP=$(ls -t *.zip 2>/dev/null | head -n 1)
-          fi
-          echo "Kaynak: $ZIP"
-          rm -rf kaynak && mkdir kaynak
-          unzip -q "$ZIP" -d kaynak
-          ls kaynak/remote
-
-      - uses: actions/setup-java@v5
-        with:
-          distribution: temurin
-          java-version: 17
-
-      - name: Ortami hazirla
-        run: |
-          set -x
-          echo "ANDROID_HOME=$ANDROID_HOME"
-          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
-          ls "$ANDROID_HOME" || true
-          ls "$ANDROID_HOME/cmdline-tools" || true
-          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null 2>&1 || true
-          echo "lisanslar tamam"
-          # Chiaki'nin istedigi tam surumler; Gradle'in kendi indirmesine
-          # guvenmek yerine burada acikca kuruyoruz.
-          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" \
-            "ndk;28.2.13676358" "cmake;3.22.1" "platforms;android-35" \
-            > kurulum.log 2>&1 || { tail -n 20 kurulum.log; exit 1; }
-          echo "NDK ve CMake kuruldu:"
-          ls "$ANDROID_HOME/ndk" "$ANDROID_HOME/cmake"
-          # Chiaki'nin ag protokolu kodu derleme sirasinda uretiliyor.
-          # Bunun icin protoc programi ve nanopb'nin Python esi gerekiyor
-          # (kaynak: lib/protobuf/CMakeLists.txt ve nanopb/requirements.txt).
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq protobuf-compiler
-          python3 -m pip install --break-system-packages --quiet \
-            protobuf grpcio-tools
-          echo "protoc: $(protoc --version)"
-          python3 -c "import google.protobuf, grpc_tools; \
-            print('python protobuf:', google.protobuf.__version__)"
-
-      - name: Chiaki kaynagini al ve yamala
-        run: |
-          set -x
-          bash kaynak/remote/uygula.sh chiaki-kaynak
-          echo "--- yamali dosyalar ---"
-          grep -n "applicationId\|versionName\|ndkVersion" chiaki-kaynak/android/app/build.gradle | head
-          grep -n "app_name" chiaki-kaynak/android/app/src/main/res/values/strings.xml
-
-      - name: Derle
-        working-directory: chiaki-kaynak/android
-        run: |
-          chmod +x gradlew
-          # Gradle gerekli NDK ve CMake surumunu kendisi indirir.
-          set +e
-          ./gradlew assembleDebug --no-daemon --stacktrace > derle.log 2>&1
-          DURUM=$?
-          set -e
-          if [ "$DURUM" -ne 0 ]; then
-            echo "=========== HATANIN SEBEBI ==========="
-            sed -n '/^FAILURE:/,/^\* Try:/p' derle.log | head -n 40
-            echo "=========== DERLEYICI SATIRLARI ==========="
-            grep -iE "error:|No such file|CMake Error|ninja: |fatal" derle.log \
-              | head -n 40
-            echo "=========== SON 40 SATIR ==========="
-            tail -n 40 derle.log
-            exit 1
-          fi
-          echo "Derleme tamam."
-
-      # Derleme dusse de kayit her zaman indirilebilir olsun.
-      - name: Kaydi topla
-        if: always()
-        run: |
-          mkdir -p kayit
-          cp chiaki-kaynak/android/derle.log kayit/ 2>/dev/null || true
-          cp kurulum.log kayit/ 2>/dev/null || true
-          ls -la kayit || true
-
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: 4-Remote-KAYIT-${{ github.run_number }}
-          path: kayit
-          if-no-files-found: warn
-
-      - name: APK yolunu bul
-        id: apk
-        shell: bash
-        run: |
-          YOL=$(find chiaki-kaynak/android -name "*.apk" | head -n 1)
-          if [ -z "$YOL" ]; then
-            echo "HATA: hic APK uretilmemis."
-            echo "Derleme adimi yesil gorunse bile gercekte basarisiz olmus."
-            echo "=========== DERLEME KAYDININ SONU ==========="
-            tail -n 60 chiaki-kaynak/android/derle.log 2>/dev/null \
-              || echo "derle.log bulunamadi"
-            exit 1
-          fi
-          echo "Bulunan APK: $YOL"
-          echo "yol=$YOL" >> "$GITHUB_OUTPUT"
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: 3-Remote-APK-${{ github.run_number }}
-          path: ${{ steps.apk.outputs.yol }}
           if-no-files-found: error
