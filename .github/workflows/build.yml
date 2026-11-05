@@ -198,3 +198,11 @@ jobs:
             dist/LingoPlay.exe
             dist/model-testi.txt
           if-no-files-found: error
+
+      # Dil paketi ayrı: EXE indirmesi küçük kalsın. Bilgisayarda "Dosyadan ekle" ile kurulur.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: 3b-Dil-Paketi
+          path: dist/paket/en_tr.argosmodel
+          compression-level: 0
+          if-no-files-found: warn
