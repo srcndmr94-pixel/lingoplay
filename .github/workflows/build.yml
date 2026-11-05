@@ -185,18 +185,16 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Bagimliliklar
-        run: pip install pyinstaller mss numpy rapidocr-onnxruntime
-
-      - name: Derle
-        run: >
-          pyinstaller --onefile --noconsole --name LingoPlay
-          --collect-all rapidocr_onnxruntime
-          --collect-all onnxruntime
-          kaynak/pc/lingoplay_pc.py
+      # Derleme adımları zip'in içinde (pc/derle.py, pc/gereksinimler.txt):
+      # PC'de değişiklik olunca bu dosyayı güncellemek gerekmez.
+      - name: Derle ve dene
+        timeout-minutes: 40
+        run: python kaynak/pc/derle.py
 
       - uses: actions/upload-artifact@v4
         with:
           name: 3-Bilgisayar-EXE-${{ github.run_number }}
-          path: dist/LingoPlay.exe
+          path: |
+            dist/LingoPlay.exe
+            dist/model-testi.txt
           if-no-files-found: error
