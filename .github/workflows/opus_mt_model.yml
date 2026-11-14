@@ -55,11 +55,10 @@ jobs:
           python -m pip install 'numpy>=1.24,<2' 'transformers==4.44.2' 'optimum[onnxruntime]==1.23.3' 'onnx==1.17.0' 'onnxscript>=0.2,<1' 'sentencepiece>=0.2,<0.3' 'sacremoses>=0.1' 'huggingface_hub>=0.24,<1'
           python -m pip check
           python - <<'PYVERS'
-          import torch, onnx, transformers
+          import torch, onnx, inspect
           from optimum.exporters.onnx import main_export
-          import inspect
           assert torch.__version__.startswith('2.4.1'), torch.__version__
-          assert 'dynamo' in inspect.signature(main_export).parameters
+          assert 'opset' in inspect.signature(main_export).parameters
           print('Legacy ONNX exporter ready:', torch.__version__, onnx.__version__)
           PYVERS
 
@@ -73,10 +72,10 @@ jobs:
           s = p.read_text(encoding='utf-8')
           needle = 'no_post_process=True)'
           if s.count(needle) != 1:
-              raise SystemExit('Expected exporter call not found exactly once')
-          s = s.replace(needle, 'no_post_process=True, opset=17, dynamo=False)')
+              raise SystemExit('Expected Optimum exporter call not found exactly once')
+          s = s.replace(needle, 'no_post_process=True, opset=17)')
           p.write_text(s, encoding='utf-8')
-          print('Enabled opset=17, dynamo=False')
+          print('Enabled: opset=17 using legacy exporter')
           PYPATCH
           python -m py_compile kaynak/tools/opus_mt/export_model.py
 
@@ -119,3 +118,4 @@ jobs:
           path: model-out/GameLingo_OPUS_MT_en_tr_model.zip
           retention-days: 7
           if-no-files-found: error
+          
