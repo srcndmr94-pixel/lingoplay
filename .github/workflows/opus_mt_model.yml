@@ -1,0 +1,71 @@
+name: GameLingo - OPUS-MT EN-TR Model Paketi
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/opus_mt_model.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  opus-model:
+    name: OPUS-MT ONNX model ZIP
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: OPUS donusturucusu bulunan son kaynak ZIP'ini sec
+        shell: bash
+        run: |
+          set -euo pipefail
+          ZIP=""
+          while IFS= read -r FILE; do
+            [ -f "$FILE" ] || continue
+            case "$FILE" in
+              *.zip)
+                if unzip -Z1 "$FILE" | grep -Fx 'tools/opus_mt/export_model.py' >/dev/null; then
+                  ZIP="$FILE"
+                  break
+                fi
+                ;;
+            esac
+          done < <(git log --name-only --pretty=format: -n 100 | awk 'NF && !seen[$0]++')
+          if [ -z "$ZIP" ]; then
+            echo '::error::OPUS-MT donusturucusu iceren kaynak ZIP GitHub kokunde bulunamadi.'
+            exit 1
+          fi
+          echo "Kaynak ZIP: $ZIP"
+          mkdir -p kaynak
+          unzip -q "$ZIP" -d kaynak
+          test -s kaynak/tools/opus_mt/export_model.py
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Model donusturme araclarini kur
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install 'transformers==4.44.2' 'optimum[onnxruntime]==1.23.3' 'onnx>=1.16,<2' 'sentencepiece>=0.2,<0.3' 'sacremoses>=0.1' 'torch>=2.3,<3' 'huggingface_hub>=0.24,<1'
+
+      - name: Acik kaynak OPUS-MT EN-TR modelini indir ve ONNX'e donustur
+        run: python kaynak/tools/opus_mt/export_model.py --out model-out
+
+      - name: Paketi kontrol et
+        run: |
+          test -s model-out/GameLingo_OPUS_MT_en_tr_model.zip
+          unzip -t model-out/GameLingo_OPUS_MT_en_tr_model.zip
+          unzip -Z1 model-out/GameLingo_OPUS_MT_en_tr_model.zip
+
+      - name: Telefon icin model paketini yukle
+        uses: actions/upload-artifact@v4
+        with:
+          name: GameLingo-OPUS-MT-en-tr-model
+          path: model-out/GameLingo_OPUS_MT_en_tr_model.zip
+          retention-days: 7
+          if-no-files-found: error
