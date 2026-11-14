@@ -51,17 +51,66 @@ jobs:
       - name: Model donusturme araclarini kur
         run: |
           python -m pip install --upgrade pip
-          python -m pip install 'transformers==4.44.2' 'optimum[onnxruntime]==1.23.3' 'onnx>=1.16,<2' 'onnxscript>=0.2,<1' 'sentencepiece>=0.2,<0.3' 'sacremoses>=0.1' 'torch>=2.3,<3' 'huggingface_hub>=0.24,<1'
-          python -c "import torch, onnx, onnxscript, optimum, sentencepiece, transformers; print('ONNX donusturme bagimliliklari hazir')"
+          python -m pip install 'torch==2.4.1+cpu' --index-url https://download.pytorch.org/whl/cpu
+          python -m pip install 'numpy>=1.24,<2' 'transformers==4.44.2' 'optimum[onnxruntime]==1.23.3' 'onnx==1.17.0' 'onnxscript>=0.2,<1' 'sentencepiece>=0.2,<0.3' 'sacremoses>=0.1' 'huggingface_hub>=0.24,<1'
+          python -m pip check
+          python - <<'PYVERS'
+          import torch, onnx, transformers
+          from optimum.exporters.onnx import main_export
+          import inspect
+          assert torch.__version__.startswith('2.4.1'), torch.__version__
+          assert 'dynamo' in inspect.signature(main_export).parameters
+          print('Legacy ONNX exporter ready:', torch.__version__, onnx.__version__)
+          PYVERS
 
-      - name: Acik kaynak OPUS-MT EN-TR modelini indir ve ONNX'e donustur
+      - name: ONNX donusturucusunu opset 17 icin hazirla
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PYPATCH'
+          from pathlib import Path
+          p = Path('kaynak/tools/opus_mt/export_model.py')
+          s = p.read_text(encoding='utf-8')
+          needle = 'no_post_process=True)'
+          if s.count(needle) != 1:
+              raise SystemExit('Expected exporter call not found exactly once')
+          s = s.replace(needle, 'no_post_process=True, opset=17, dynamo=False)')
+          p.write_text(s, encoding='utf-8')
+          print('Enabled opset=17, dynamo=False')
+          PYPATCH
+          python -m py_compile kaynak/tools/opus_mt/export_model.py
+
+      - name: OPUS-MT modelini ONNX formatina donustur
         run: python kaynak/tools/opus_mt/export_model.py --out model-out
 
-      - name: Paketi kontrol et
+      - name: ONNX giris ve cikislarini dogrula
+        run: |
+          python - <<'PYONNX'
+          from pathlib import Path
+          import onnxruntime as ort
+          root = Path('model-out')
+          checks = {
+              'encoder_model.onnx': ({'input_ids'}, set()),
+              'decoder_model.onnx': (set(), {'logits'}),
+          }
+          for filename, (required_inputs, required_outputs) in checks.items():
+              session = ort.InferenceSession(str(root / filename), providers=['CPUExecutionProvider'])
+              ins = {i.name for i in session.get_inputs()}
+              outs = {o.name for o in session.get_outputs()}
+              assert required_inputs <= ins, (filename, 'inputs', ins)
+              assert required_outputs <= outs, (filename, 'outputs', outs)
+              if filename == 'decoder_model.onnx':
+                  assert 'encoder_hidden_states' in ins or 'encoder_outputs' in ins, ins
+                  assert 'input_ids' in ins or 'decoder_input_ids' in ins, ins
+                  assert not any('past_key_values' in name for name in ins), ins
+              print(filename, 'ORT session OK')
+              del session
+          PYONNX
+
+      - name: Model paketini kontrol et
         run: |
           test -s model-out/GameLingo_OPUS_MT_en_tr_model.zip
           unzip -t model-out/GameLingo_OPUS_MT_en_tr_model.zip
-          unzip -Z1 model-out/GameLingo_OPUS_MT_en_tr_model.zip
 
       - name: Telefon icin model paketini yukle
         uses: actions/upload-artifact@v4
