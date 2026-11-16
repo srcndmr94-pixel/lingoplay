@@ -926,6 +926,8 @@ object OcrQuality {
     }
 
     fun bozukMu(text: String): Boolean {
+        // An unmistakable broken glyph is not made safe by a long valid suffix.
+        if ('\uFFFD' in text || Regex("""\p{L}[|#@]\p{L}""").containsMatchIn(text)) return true
         val kelimeler = text.split(Regex("\\s+")).filter { w -> w.count { it.isLetter() } >= 3 }
         if (kelimeler.isEmpty()) return false
         val bozuk = kelimeler.count { kelimeBozukMu(it) }
@@ -1212,11 +1214,11 @@ object ProfanityShield {
         rule("\\bfuck(?:ing|in'?)\\s+", "", HARD),
         rule("\\bgoddamn(?:ed)?\\s+", "", DAMN),
         rule("\\b(?:freaking|effing|frickin'?|friggin'?)\\s+", "", MILD),
+        rule("\\bget your shit together\\b", "pull yourself together", MILD),
         // "shit" bağlama göre: eşya, dayak, büyük bela
         rule("\\b(my|your|his|her|our|their) shit\\b", "$1 stuff", null),
         rule("\\bthe (?:shit|crap|hell) out of (me|you|him|her|them|us|it)\\b", "$1 badly", HARD),
         rule("\\bin deep shit\\b", "in big trouble", HARD),
-        rule("\\bget your shit together\\b", "pull yourself together", MILD),
         // deyimler
         rule("\\blife's a bitch\\b", "life is hard", DAMN),
         rule("\\bbitch(?:ing)?\\s+about\\b", "complaining about", null)
@@ -1284,7 +1286,9 @@ object ProfanityShield {
             }
         }
         // Cümlede zaten "siktir/orospu çocuğu" gibi sert bir küfür kalıyorsa ayrıca "be" eklemeye gerek yok.
-        val finalTails = if (slots.isNotEmpty()) tails.filter { it != MILD } else tails
+        val multipleClauses = Regex("""[.!?]\s+\p{L}""").containsMatchIn(text)
+        val finalTails = if (multipleClauses) emptyList()
+            else if (slots.isNotEmpty()) tails.filter { it != MILD } else tails
         return Shielded(t, slots, finalTails.take(1))
     }
 
@@ -1293,6 +1297,9 @@ object ProfanityShield {
         if (tails.isEmpty() || translated.isBlank()) return translated
         val tail = tails.first()
         if (translated.contains(tail, ignoreCase = true)) return translated
+        // Do not intensify an already preserved insult or swear word a second time.
+        if (Regex("""(?<![\p{L}])(?:siktir|sikti[\p{L}]*|sikim[\p{L}]*|amına|orospu|piç|bok[\p{L}]*|kaltak|göt[\p{L}]*)(?![\p{L}])""",
+                RegexOption.IGNORE_CASE).containsMatchIn(translated)) return translated
         val m = Regex("[.!?…]+$").find(translated.trimEnd())
         val body = translated.trimEnd().removeSuffix(m?.value ?: "").trimEnd(',', ' ')
         val punct = m?.value ?: ""

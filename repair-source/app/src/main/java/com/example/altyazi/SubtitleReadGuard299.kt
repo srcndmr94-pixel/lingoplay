@@ -94,6 +94,19 @@ class SubtitleReadGuard299(
          * daha genis anlamini degistirmez.
          */
         fun newMeaningForDispatch(previous: String, current: String): Boolean {
+            // Similar spelling is not sufficient for deduplication when a known
+            // meaning-bearing token changes (can/can't, here/there, you/we, 10/20).
+            val a = words(previous)
+            val b = words(current)
+            val meaningWords = NEGATIONS + setOf("can", "do", "does", "did", "will",
+                "would", "should", "could", "is", "are", "was", "were",
+                "i", "you", "he", "she", "we", "they", "me", "him", "her", "us",
+                "my", "your", "his", "our", "their", "here", "there", "now", "then",
+                "in", "out", "up", "down", "left", "right", "come", "go")
+            if (a.size == b.size && a.indices.any { i ->
+                    a[i] != b[i] && ((a[i] in meaningWords && b[i] in meaningWords) ||
+                        (a[i].all(Char::isDigit) && b[i].all(Char::isDigit)))
+                }) return true
             if (!meaningfulRevision(previous, current)) return false
             if (!smallCorrection(previous, current)) return true
             val beforeNegations = words(previous).filter { it in NEGATIONS }

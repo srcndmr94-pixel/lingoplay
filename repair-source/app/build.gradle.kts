@@ -26,8 +26,8 @@ android {
         applicationId = "com.example.altyazi"
         minSdk = 31
         targetSdk = 34
-        versionCode = 204
-        versionName = "10.42.7-quality-rc10"
+        versionCode = 205
+        versionName = "10.42.7-repair205"
     }
 
     // Sabit imza: her derleme aynı anahtarla imzalanır, güncelleme eskisinin üstüne kurulur.
@@ -70,6 +70,7 @@ kotlin {
 }
 
 dependencies {
+    testImplementation("junit:junit:4.13.2")
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.appcompat:appcompat:1.7.0")
     implementation("com.google.android.material:material:1.12.0")

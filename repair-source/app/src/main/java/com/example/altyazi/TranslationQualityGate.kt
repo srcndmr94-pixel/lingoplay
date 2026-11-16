@@ -41,7 +41,10 @@ object TranslationQualityGate {
     fun check(source: String, translated: String): Problem? {
         val s = source.trim()
         val t = translated.trim()
-        if (s.isEmpty() || t.isEmpty() || s.equals(t, ignoreCase = true)) return Problem.UNTRANSLATED
+        if (s.isEmpty() || t.isEmpty()) return Problem.UNTRANSLATED
+        // Punctuation/case differences do not turn an echoed English line into Turkish.
+        fun folded(value: String) = value.lowercase(java.util.Locale.ROOT).filter { it.isLetterOrDigit() }
+        if (folded(s) == folded(t)) return Problem.UNTRANSLATED
         // A model/template leaked a fictional variable, not a translation.
         // Valid speaker/sound labels such as [Soul] or [groans] are excluded.
         val leakedSlot = Regex("""\[(?:ad|isim|name|film/dizi|movie|series|character|speaker|unknown|placeholder)\]""", RegexOption.IGNORE_CASE)
@@ -102,7 +105,7 @@ object TranslationQualityGate {
         // never suppress a potentially correct paraphrase solely on that.
         Problem.REVERSED_COMMAND, Problem.IMPERATIVE_AS_INFINITIVE,
         Problem.INVENTED_PLACEHOLDER, Problem.PERSON_REVERSAL,
-        Problem.UNTRANSLATED_SLANG -> true
+        Problem.UNTRANSLATED_SLANG, Problem.UNTRANSLATED, Problem.ENGLISH_FRAGMENT -> true
         else -> false
     }
 

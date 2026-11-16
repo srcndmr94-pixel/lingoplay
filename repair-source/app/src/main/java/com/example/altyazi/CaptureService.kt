@@ -292,6 +292,8 @@ class CaptureService : Service() {
     private var bandImza: IntArray? = null
     private var imzaPiksel: IntArray? = null
     private val subtitleReadGuard299 = SubtitleReadGuard299()
+    private val subtitleRetry205 = SubtitleRetry205()
+    private var sourceGap205 = false
 
     // --- altyazı durumu ---
     @Volatile private var shownSource = ""
@@ -1288,6 +1290,15 @@ class CaptureService : Service() {
             // kaydırıcısı alt sınır (bkz. okumaSuresi).
             val yeterinceDurdu =
                 android.os.SystemClock.elapsedRealtime() - shownAtMs >= okumaMs
+            if (emptyFrames >= 6 && !sourceGap205) {
+                sourceGap205 = true
+                subtitleGeneration.invalidate()
+                inFlight.values.forEach { it.cancel() }
+                translatingFor = ""
+                candidate = ""
+                candidateSeen = 0
+                subtitleRetry205.reset()
+            }
             if (emptyFrames >= 6 && shownSource.isNotEmpty() && yeterinceDurdu) {
                 shownSource = ""
                 candidate = ""
@@ -1340,7 +1351,7 @@ class CaptureService : Service() {
             return
         }
 
-        if (!SubtitleReadGuard299.newMeaningForDispatch(shownSource, text) &&
+        if (!sourceGap205 && !SubtitleReadGuard299.newMeaningForDispatch(shownSource, text) &&
             (similar(text, shownSource) || OcrOnar.ayniGurultulu(text, shownSource))) {
             dustu(text, "ekrandakiyle aynı sayıldı: ${shownSource.take(40)}")
             candidate = ""
@@ -1348,7 +1359,7 @@ class CaptureService : Service() {
             return
         }
 
-        if (similar(text, candidate)) {
+        if (normalize(text) == normalize(candidate)) {
             candidateSeen++
         } else {
             candidate = text
@@ -1384,6 +1395,9 @@ class CaptureService : Service() {
             return
         }
 
+        if (!subtitleRetry205.begin(text, android.os.SystemClock.elapsedRealtime())) return
+        sourceGap205 = false
+
         // Newest subtitle always gets a slot. An outdated network request
         // must never make the current onscreen subtitle disappear.
         if (inFlight.size >= MAX_PARALLEL) {
@@ -1405,6 +1419,8 @@ class CaptureService : Service() {
         }
         translatingFor = source
         val runId = subtitleGeneration.newSubtitle()
+        // Superseded requests cannot publish; release their coroutine slots now.
+        inFlight.values.forEach { it.cancel() }
         // New English subtitle accepted. Do not leave the preceding Turkish
         // caption visible while waiting for this line's translation.
         // OCR variations of the SAME utterance keep the current caption.
@@ -1464,9 +1480,18 @@ class CaptureService : Service() {
                 // Ana motor başarılıysa kalan taslak işini boşa sürdürme.
                 // Başarısızsa kısa yerel kurtarma devam edebilir; kendi runId
                 // denetimi yüzünden sonraki repliğin üzerine yazamaz.
-                if (shownSource == source || !subtitleGeneration.isCurrent(runId)) localRescue?.cancel()
-                inFlight.remove(runId)
-                startedAt.remove(source, startedMs)
+                try {
+                    if (shownSource == source || !subtitleGeneration.isCurrent(runId)) localRescue?.cancel()
+                    else localRescue?.join() // Bounded local timeout; wait before a retry.
+                    if (subtitleGeneration.isCurrent(runId) && shownSource != source) {
+                        subtitleRetry205.failed(android.os.SystemClock.elapsedRealtime())
+                        translatingFor = "" // Finished failure is no longer an in-flight duplicate.
+                    }
+                } finally {
+                    localRescue?.cancel()
+                    inFlight.remove(runId)
+                    startedAt.remove(source, startedMs)
+                }
             }
         }
         inFlight[runId] = job
@@ -3080,7 +3105,7 @@ class CaptureService : Service() {
         // "lvories" -> "ivories". Sözlük henüz yüklenmediyse metne dokunmaz.
         val collapsed = SubtitlePreparation.repair(SoundTags.repair(OcrTextCleaner.clean(TextFix.clean(
             KonusanOnEki.uygula(AdDefteri.acikEtiketKapat(EtiketOnar.onar(OcrOnar.onar(raw))))))))
-        if (collapsed.length < 3) return ""
+        if (collapsed.length < 3 && !SubtitleReadGuard299.shortSpokenLine(collapsed)) return ""
         val letters = collapsed.count { it.isLetter() }
         if (letters < 3 && !SubtitleReadGuard299.shortSpokenLine(collapsed)) return ""
         if (letters.toFloat() / collapsed.length < 0.45f) return ""
