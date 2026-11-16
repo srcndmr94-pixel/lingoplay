@@ -37,8 +37,8 @@ android {
     buildTypes {
         debug {
             isMinifyEnabled = false
-            // Install next to stable 201; no compromised update key is required.
-            applicationIdSuffix = ".benchmark"
+            // Install next to existing builds; per-run debug signing cannot update them.
+            applicationIdSuffix = ".repair205"
         }
         release {
             isMinifyEnabled = false
