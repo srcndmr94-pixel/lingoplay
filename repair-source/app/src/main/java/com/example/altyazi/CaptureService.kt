@@ -973,6 +973,8 @@ class CaptureService : Service() {
                         sonKurtarmaMs = rotatedAtMs
                         bandImza = null
                         subtitleReadGuard299.reset()
+                        subtitleRetry205.reset()
+                        sourceGap205 = false
                         textBottomScreenPx = -1
                         textBottomAt = 0L
                         protectedBandTopPx = -1
@@ -1325,6 +1327,8 @@ class CaptureService : Service() {
             candidateSeen = 0
             if (ownTextFrames >= 8 && shownSource.isNotEmpty()) {
                 ownTextFrames = 0
+                subtitleRetry205.reset()
+                sourceGap205 = true
                 shownSource = ""
                 translatingFor = ""
                 subtitleGeneration.invalidate()

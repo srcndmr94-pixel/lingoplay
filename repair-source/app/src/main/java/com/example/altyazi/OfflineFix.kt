@@ -1263,6 +1263,10 @@ object ProfanityShield {
     private val inPlace = Regex("\\b(this|that|the|my|your|his|her|our|their|a|an|these|those|some|every|no|whole|one)\\s+(motherfucking|fucking|fuckin'?|goddamn(?:ed)?|damn|damned)\\s+(?=\\p{L})", RegexOption.IGNORE_CASE)
 
     fun shield(text: String): Shielded {
+        // Keep multi-sentence input intact for MT: an emphasis from the first
+        // sentence must never be removed and appended to the last sentence.
+        if (Regex("""[.!?]\s+\p{L}""").containsMatchIn(text))
+            return Shielded(text, emptyList())
         var t = text
         val tails = ArrayList<String>()
         val slots = ArrayList<Slot>()
@@ -1286,9 +1290,7 @@ object ProfanityShield {
             }
         }
         // Cümlede zaten "siktir/orospu çocuğu" gibi sert bir küfür kalıyorsa ayrıca "be" eklemeye gerek yok.
-        val multipleClauses = Regex("""[.!?]\s+\p{L}""").containsMatchIn(text)
-        val finalTails = if (multipleClauses) emptyList()
-            else if (slots.isNotEmpty()) tails.filter { it != MILD } else tails
+        val finalTails = if (slots.isNotEmpty()) tails.filter { it != MILD } else tails
         return Shielded(t, slots, finalTails.take(1))
     }
 

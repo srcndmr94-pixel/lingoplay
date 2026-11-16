@@ -93,7 +93,10 @@ class SubtitleRepair205Test {
         assertEquals("Siktir git!", ProfanityShield.addTails("Siktir git!", listOf("amına koyayım")))
     }
     @Test fun swearingIsNotAppendedToUnrelatedSecondSentence() {
-        assertTrue(ProfanityShield.shield("Don't fucking move. The child is safe.").tails.isEmpty())
+        val source = "Don't fucking move. The child is safe."
+        val result = ProfanityShield.shield(source)
+        assertTrue(result.tails.isEmpty())
+        assertEquals(source, result.text)
     }
     @Test fun directInsultIsRestoredInPlace() {
         val shielded = ProfanityShield.shield("You are a bastard.")
