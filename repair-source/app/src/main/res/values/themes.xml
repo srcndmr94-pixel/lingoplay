@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.Lingo" parent="Theme.Material3.Dark.NoActionBar">
+        <item name="colorPrimary">@color/lingo_primary</item>
+        <item name="colorOnPrimary">@color/lingo_on_primary</item>
+        <item name="colorPrimaryContainer">@color/lingo_primary_container</item>
+        <item name="colorOnPrimaryContainer">@color/lingo_on_primary_container</item>
+
+        <item name="colorSecondary">@color/lingo_secondary</item>
+        <item name="colorOnSecondary">@color/lingo_on_secondary</item>
+
+        <item name="android:colorBackground">@color/lingo_bg</item>
+        <item name="colorSurface">@color/lingo_surface</item>
+        <item name="colorSurfaceVariant">@color/lingo_surface_variant</item>
+        <item name="colorOnSurface">@color/lingo_on_surface</item>
+        <item name="colorOnSurfaceVariant">@color/lingo_on_surface_variant</item>
+        <item name="colorOutline">@color/lingo_outline</item>
+
+        <item name="android:statusBarColor">@color/lingo_bg</item>
+        <item name="android:navigationBarColor">@color/lingo_bg</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <!-- Android 12+ sistem açılış ekranı: arka plan girişteki animasyonla aynı renk, geçiş dikişsiz olsun -->
+        <item name="android:windowSplashScreenBackground">@color/lingo_bg</item>
+        <item name="android:windowBackground">@color/lingo_bg</item>
+    </style>
+
+    <!-- Bölüm başlıklarının üstündeki küçük etiket -->
+    <style name="LingoLabel">
+        <item name="android:textSize">11sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">0.14</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:textColor">?attr/colorPrimary</item>
+    </style>
+
+    <style name="LingoTitle">
+        <item name="android:textSize">19sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">?attr/colorOnSurface</item>
+        <item name="android:layout_marginTop">2dp</item>
+    </style>
+
+    <!-- Ana ekrandaki kısayol kutuları -->
+    <style name="GlTileTitle">
+        <item name="android:textSize">14sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">?attr/colorOnSurface</item>
+        <item name="android:layout_marginTop">6dp</item>
+    </style>
+
+    <style name="GlTileHint">
+        <item name="android:textSize">11sp</item>
+        <item name="android:textColor">?attr/colorOnSurfaceVariant</item>
+    </style>
+
+    <style name="GlNav">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:gravity">center</item>
+        <item name="android:drawablePadding">2dp</item>
+        <item name="android:paddingTop">8dp</item>
+        <item name="android:paddingBottom">8dp</item>
+        <item name="android:textSize">11sp</item>
+        <item name="android:textColor">?attr/colorOnSurfaceVariant</item>
+        <item name="android:background">?attr/selectableItemBackgroundBorderless</item>
+    </style>
+
+    <style name="LingoHint">
+        <item name="android:textSize">12sp</item>
+        <item name="android:textColor">?attr/colorOnSurfaceVariant</item>
+        <item name="android:lineSpacingExtra">2dp</item>
+        <item name="android:layout_marginTop">4dp</item>
+    </style>
+</resources>

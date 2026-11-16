@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- GameLingo renk düzeni: koyu lacivert + turkuaz (açık/koyu temada aynı) -->
+    <color name="lingo_primary">#2EE6D6</color>
+    <color name="lingo_on_primary">#04221F</color>
+    <color name="lingo_primary_container">#0D3346</color>
+    <color name="lingo_on_primary_container">#BFF8F2</color>
+
+    <color name="lingo_secondary">#2EA8FF</color>
+    <color name="lingo_on_secondary">#02203A</color>
+
+    <color name="lingo_bg">#0B1220</color>
+    <color name="lingo_surface">#111B2E</color>
+    <color name="lingo_surface_variant">#16233A</color>
+    <color name="lingo_on_surface">#E8EEF8</color>
+    <color name="lingo_on_surface_variant">#8EA0BD</color>
+    <color name="lingo_outline">#1D2C47</color>
+    <color name="lingo_glow">#552EE6D6</color>
+    <color name="lingo_ok">#2EE68A</color>
+    <color name="lingo_warn">#FFB454</color>
+    <color name="lingo_bad">#FF5D6C</color>
+
+    <color name="lingo_preview_bg">#1A2433</color>
+</resources>

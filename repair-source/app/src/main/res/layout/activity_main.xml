@@ -1,0 +1,1547 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  GameLingo — ana ekran (koyu lacivert + turkuaz).
+  Kod tarafının aradığı tüm kimlikler korundu; yeni kimlikler: scroll, tvIndicators,
+  tileRegion/tileAi/tileLook/tileDict, tvLastSrc/tvLastTr, boxModel, sec*, nav*.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="?android:attr/colorBackground"
+    android:orientation="vertical">
+
+<ScrollView
+    android:id="@+id/scroll"
+    android:layout_width="match_parent"
+    android:layout_height="0dp"
+    android:layout_weight="1"
+    android:scrollbars="none"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingBottom="24dp">
+
+        <!-- ============================ BAŞLIK ============================ -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="18dp"
+            android:paddingTop="24dp"
+            android:paddingEnd="18dp">
+
+            <FrameLayout
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:background="@drawable/bg_logo">
+
+                <ImageView
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_gravity="center"
+                    android:contentDescription="@string/app_name"
+                    android:src="@drawable/ic_launcher_foreground" />
+            </FrameLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Game"
+                        android:textColor="?attr/colorOnSurface"
+                        android:textSize="28sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Lingo"
+                        android:textColor="?attr/colorPrimary"
+                        android:textSize="28sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Oyunları kendi dilinde yaşa"
+                    android:textColor="?attr/colorOnSurfaceVariant"
+                    android:textSize="13sp" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tvVersion"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="top"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:textSize="11sp" />
+        </LinearLayout>
+
+        <!-- ======================= TELEFON / TV ======================= -->
+        <LinearLayout
+            android:id="@+id/segMode"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_marginTop="16dp"
+            android:layout_marginEnd="12dp"
+            android:background="@drawable/bg_seg_track"
+            android:orientation="horizontal"
+            android:padding="4dp">
+
+            <TextView
+                android:id="@+id/btnModePhone"
+                android:layout_width="0dp"
+                android:layout_height="46dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg_seg_off"
+                android:clickable="true"
+                android:focusable="true"
+                android:drawableStart="@drawable/ic_gl_phone"
+                android:drawablePadding="8dp"
+                android:gravity="center"
+                android:paddingStart="28dp"
+                android:paddingEnd="28dp"
+                android:text="Telefon"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:textSize="15sp" />
+
+            <TextView
+                android:id="@+id/btnModeTv"
+                android:layout_width="0dp"
+                android:layout_height="46dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg_seg_on"
+                android:clickable="true"
+                android:focusable="true"
+                android:drawableStart="@drawable/ic_gl_tv"
+                android:drawablePadding="8dp"
+                android:gravity="center"
+                android:paddingStart="36dp"
+                android:paddingEnd="36dp"
+                android:text="TV"
+                android:textColor="?attr/colorOnSurface"
+                android:textSize="15sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginEnd="16dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/tvTvState"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Telefon · normal boyut"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:textSize="13sp" />
+
+            <TextView
+                android:id="@+id/btnTvGuide"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:clickable="true"
+                android:focusable="true"
+                android:padding="6dp"
+                android:text="TV kılavuzu"
+                android:textColor="?attr/colorPrimary"
+                android:textSize="13sp" />
+        </LinearLayout>
+
+        <!-- GameLingo TV: telefonla eşleş (yalnızca TV'de görünür) -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnPhoneLink"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginEnd="12dp"
+            android:text="Telefonun yapay zekâsını kullan"
+            android:visibility="gone" />
+
+        <!-- ======================= ÇEVİRİYİ BAŞLAT ======================= -->
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/btnToggle"
+            android:layout_width="match_parent"
+            android:layout_height="84dp"
+            android:layout_marginStart="12dp"
+            android:layout_marginTop="18dp"
+            android:layout_marginEnd="12dp"
+            android:background="@drawable/bg_start"
+            android:drawableStart="@drawable/ic_gl_play"
+            android:drawablePadding="12dp"
+            android:gravity="center"
+            android:letterSpacing="0.04"
+            android:paddingStart="28dp"
+            android:paddingEnd="28dp"
+            android:stateListAnimator="@null"
+            android:text="ÇEVİRİYİ BAŞLAT"
+            android:textColor="?attr/colorOnSurface"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <!-- ============================ DURUM ============================ -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="12dp"
+            android:layout_marginEnd="16dp"
+            android:background="@drawable/bg_card"
+            android:orientation="vertical"
+            android:padding="14dp">
+
+            <TextView
+                android:id="@+id/tvStatus"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_status"
+                android:paddingStart="12dp"
+                android:paddingTop="5dp"
+                android:paddingEnd="12dp"
+                android:paddingBottom="5dp"
+                android:text="Durduruldu"
+                android:textColor="?attr/colorOnPrimaryContainer"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvIndicators"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:textSize="12sp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnCheck"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:minHeight="0dp"
+                android:paddingStart="0dp"
+                android:text="Kurulumu kontrol et" />
+
+            <TextView
+                android:id="@+id/tvCheck"
+                style="@style/LingoHint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+
+        <!-- ========================= KISAYOLLAR ========================= -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="12dp"
+            android:layout_marginEnd="16dp"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <LinearLayout
+                    android:id="@+id/tileRegion"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_tile"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:orientation="vertical"
+                    android:padding="14dp">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:contentDescription="Altyazı alanı"
+                        android:src="@drawable/ic_gl_crop" />
+
+                    <TextView
+                        style="@style/GlTileTitle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Altyazı alanı" />
+
+                    <TextView
+                        style="@style/GlTileHint"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Okunacak bölge" />
+                </LinearLayout>
+                <Space
+                    android:layout_width="10dp"
+                    android:layout_height="1dp" />
+                <LinearLayout
+                    android:id="@+id/tileAi"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_tile"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:orientation="vertical"
+                    android:padding="14dp">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:contentDescription="Yapay zekâ"
+                        android:src="@drawable/ic_gl_ai" />
+
+                    <TextView
+                        style="@style/GlTileTitle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Yapay zekâ" />
+
+                    <TextView
+                        style="@style/GlTileHint"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Hızlı / gelişmiş model" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:orientation="horizontal">
+
+                <LinearLayout
+                    android:id="@+id/tileLook"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_tile"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:orientation="vertical"
+                    android:padding="14dp">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:contentDescription="Görünüm"
+                        android:src="@drawable/ic_gl_palette" />
+
+                    <TextView
+                        style="@style/GlTileTitle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Görünüm" />
+
+                    <TextView
+                        style="@style/GlTileHint"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Renk, boyut, konum" />
+                </LinearLayout>
+                <Space
+                    android:layout_width="10dp"
+                    android:layout_height="1dp" />
+                <LinearLayout
+                    android:id="@+id/tileDict"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_tile"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:orientation="vertical"
+                    android:padding="14dp">
+
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:contentDescription="Sözlüğüm"
+                        android:src="@drawable/ic_gl_book" />
+
+                    <TextView
+                        style="@style/GlTileTitle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Sözlüğüm" />
+
+                    <TextView
+                        style="@style/GlTileHint"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Kendi düzeltmelerin" />
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- ========================= SON ÇEVRİLEN ========================= -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="12dp"
+            android:layout_marginEnd="16dp"
+            android:background="@drawable/bg_card"
+            android:orientation="vertical"
+            android:padding="14dp">
+
+            <TextView
+                style="@style/LingoLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Canlı çeviri" />
+
+            <TextView
+                style="@style/GlTileHint"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="ORİJİNAL (İN)" />
+
+            <TextView
+                android:id="@+id/tvLastSrc"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="Henüz çeviri yok. Çeviriyi başlatıp oyuna geçin."
+                android:textColor="?attr/colorOnSurfaceVariant"
+                android:textSize="13sp" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginTop="10dp"
+                android:background="@color/lingo_outline" />
+
+            <TextView
+                style="@style/GlTileHint"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:text="TÜRKÇE (TR)"
+                android:textColor="?attr/colorPrimary" />
+
+            <TextView
+                android:id="@+id/tvLastTr"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:textColor="?attr/colorOnSurface"
+                android:textSize="17sp"
+                android:textStyle="bold" />
+
+            <!-- Gerçek ölçümler: son okunan satırdan. Örnek veri değil. -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:baselineAligned="false"
+                android:orientation="horizontal">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_tile"
+                    android:orientation="vertical"
+                    android:padding="10dp">
+
+                    <TextView
+                        style="@style/LingoLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Okuma" />
+
+                    <TextView
+                        android:id="@+id/tvStatOcr"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="— ms"
+                        android:textColor="?attr/colorOnSurface"
+                        android:textSize="17sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="8dp"
+                    android:background="@drawable/bg_tile"
+                    android:orientation="vertical"
+                    android:padding="10dp">
+
+                    <TextView
+                        style="@style/LingoLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Çeviri" />
+
+                    <TextView
+                        android:id="@+id/tvStatCeviri"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="— ms"
+                        android:textColor="?attr/colorOnSurface"
+                        android:textSize="17sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="8dp"
+                    android:background="@drawable/bg_tile"
+                    android:orientation="vertical"
+                    android:padding="10dp">
+
+                    <TextView
+                        style="@style/LingoLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Gecikme" />
+
+                    <TextView
+                        android:id="@+id/tvStatGecikme"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="— ms"
+                        android:textColor="?attr/colorOnSurface"
+                        android:textSize="17sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tvStatAciklama"
+                style="@style/LingoHint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Süreler son satırın gerçek ölçümüdür: yazının okunması, ilk çevirinin ekrana çıkması ve ikisinin toplamı." />
+        </LinearLayout>
+
+        <!-- ============================ AYARLAR ============================ -->
+        <TextView
+            android:id="@+id/secSettings"
+            style="@style/LingoLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="20dp"
+            android:layout_marginTop="22dp"
+            android:layout_marginBottom="2dp"
+            android:text="Ayarlar" />
+
+        <!-- =========================== İÇERİK =========================== -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/secContent"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginTop="12dp"
+            app:cardBackgroundColor="?attr/colorSurface"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="0dp"
+            app:strokeColor="?attr/colorOutline"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="20dp">
+
+                <TextView
+                    style="@style/LingoLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Ne izliyorsunuz" />
+
+                <TextView
+                    style="@style/LingoTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="İçerik" />
+
+                <TextView
+                    style="@style/LingoHint"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Türü seçip adını yazarsanız çeviri belirgin biçimde isabetli olur." />
+
+                <Spinner
+                    android:id="@+id/spType"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp" />
+
+                <com.google.android.material.textfield.TextInputLayout
+                    style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:hint="Adı">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/etGame"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:importantForAutofill="no"
+                        android:inputType="text" />
+                </com.google.android.material.textfield.TextInputLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+
+        <!-- ========================== YAPAY ZEKÂ ========================== -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/secAi"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginTop="12dp"
+            app:cardBackgroundColor="?attr/colorSurface"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="0dp"
+            app:strokeColor="?attr/colorOutline"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="20dp">
+
+                <TextView
+                    style="@style/LingoLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Telefondaki yapay zekâ" />
+
+                <LinearLayout
+                    android:id="@+id/boxModel"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical" />
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginBottom="6dp"
+                    android:background="?attr/colorOutline" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnTvBridge"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="TV ve bilgisayara çeviri sağla" />
+
+                <TextView
+                    android:id="@+id/tvBridgeState"
+                    style="@style/LingoHint"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="6dp"
+                    android:text="Kapalı" />
+
+                <TextView
+                    style="@style/LingoLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:text="Çeviri biçimi" />
+
+                <RadioGroup
+                    android:id="@+id/rgBicim"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:orientation="vertical">
+
+                    <RadioButton
+                        android:id="@+id/rbBicimHizli"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:paddingStart="6dp"
+                        android:text="Hızlı · yapay zekâ yok; altyazı anında çıkar, sonradan değişmez" />
+
+                    <RadioButton
+                        android:id="@+id/rbBicimDengeli"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:paddingStart="6dp"
+                        android:text="Dengeli (önerilen) · seçili motor öncelikli; şüpheli sonuçta yedek motor" />
+
+                    <RadioButton
+                        android:id="@+id/rbBicimDogru"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:paddingStart="6dp"
+                        android:text="Doğru önce (deneysel) · E4B 3+ sn gecikebilir; canlı oyun için önerilmez" />
+                </RadioGroup>
+
+                <CheckBox
+                    android:id="@+id/cbAccuracy"
+                    android:visibility="gone"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingStart="6dp"
+                    android:text="Doğruluk öncelikli · önce gri taslak, yapay zekâ bitince doğrusu (yarıda kesilmez, hafızaya girer)" />
+
+                <TextView
+                    android:id="@+id/tvMinShow"
+                    style="@style/LingoHint"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingStart="6dp"
+                    android:text="Çeviri ekranda en az: 3 sn" />
+
+                <SeekBar
+                    android:id="@+id/sbMinShow"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:max="10" />
+
+                <CheckBox
+                    android:id="@+id/cbDogruyuBekle"
+                    android:visibility="gone"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingStart="6dp"
+                    android:text="Önce doğru çeviriyi bekle · satır tek seferde doğru çıkar, yazı taslaktan düzeltilmişe geçmez. Ama 1-2 sn geç çıkar. Kapalıyken çeviri anında çıkar, yapay zekâ bitince düzelir." />
+
+                <CheckBox
+                    android:id="@+id/cbYalnizDogru"
+                    android:visibility="gone"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingStart="6dp"
+                    android:text="Yalnız doğru çeviriyi göster · hızlı taslak hiç ekrana çıkmaz; yalnız sözlük, hafıza ve yapay zekâ çevirisi görünür. Kafa karıştıran ilk çeviri olmaz. Bedeli: satır yapay zekâ bitene kadar (1,5-4 sn) görünmez; hızlı konuşmada çeviri bir satır geriden gelebilir." />
+
+                <CheckBox
+                    android:id="@+id/cbYigin"
+                    android:visibility="gone"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingStart="6dp"
+                    android:text="Hızlı konuşmada önceki satır üstte kalsın · yeni replik eskisini silmez, küçülüp solgunlaşarak üste çıkar ve 1,5 sn daha okunur. Yapay zekâ düzeltmesi son anda yetişse bile kaçmaz." />
+
+                <CheckBox
+                    android:id="@+id/cbAlwaysAi"
+                    android:visibility="gone"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingStart="6dp"
+                    android:text="Yapay zekâ her satırda çalışsın · daha iyi çeviri, ama 1,5-3,5 sn gecikme ve yazı taslaktan düzeltilmişe geçer. Kapalıyken taslak sağlamsa yapay zekâ hiç çalışmaz." />
+
+                <CheckBox
+                    android:id="@+id/cbMenu"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingStart="6dp"
+                    android:text="Menü, görev ve tuş yazılarını da çevir" />
+
+                <CheckBox
+                    android:id="@+id/cbSpeaker"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingStart="6dp"
+                    android:text="Konuşan karakterin adını başta göster" />
+
+                <CheckBox
+                    android:id="@+id/cbGoogle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:paddingStart="6dp"
+                    android:text="Google Çeviri kullan (Chrome'daki çeviri · anahtarsız, kotasız, internet gerekir)" />
+
+                <TextView
+                    style="@style/LingoHint"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Açıkken API anahtarı ve kota kullanılmaz. İnternet yoksa ya da Google cevap vermezse Firefox modeline geçilir." />
+
+                <CheckBox
+                    android:id="@+id/cbDeepL"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:paddingStart="6dp"
+                    android:text="DeepL'yi öncelikli kullan (isteğe bağlı, internet ve API anahtarı gerekli)" />
+
+                <EditText
+                    android:id="@+id/etDeepLKey"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:hint="DeepL API anahtarını buraya gir"
+                    android:inputType="textPassword"
+                    android:singleLine="true"
+                    android:importantForAutofill="no"
+                    android:padding="12dp" />
+
+                <TextView
+                    style="@style/LingoHint"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="DeepL etkinse önce DeepL, başarısızsa OPUS-MT, sonra Google/Firefox. API kullanımında kota veya ücret oluşabilir. Anahtar cihazda şifreli saklanır." />
+
+                <CheckBox
+                    android:id="@+id/cbOpus"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:paddingStart="6dp"
+                    android:text="OPUS-MT (yerel): DeepL seçilmediyse ana motor, diğer durumlarda yedek" />
+
+                <TextView
+                    android:id="@+id/tvOpusStatus"
+                    style="@style/LingoHint"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+
+                <Button
+                    android:id="@+id/btnOpusImport"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="OPUS-MT model ZIP dosyasını seç" />
+
+                <Button
+                    android:id="@+id/btnModelCleanup"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:text="YÜKLÜ MODELLERİ TEMİZLE (OPUS / E2B / E4B)" />
+
+                <TextView
+                    style="@style/LingoHint"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Yalnız seçilen model dosyasını siler. Modeli silmeden önce çeviriyi durdur. Çeviri hafızası ve diğer modeller silinmez." />
+
+                <CheckBox
+                    android:id="@+id/cbFirefox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:paddingStart="6dp"
+                    android:text="Anlık çeviride Firefox çeviri modelini kullan (internetsiz, ücretsiz)" />
+
+                <TextView
+                    android:id="@+id/tvFirefoxDurum"
+                    style="@style/LingoHint"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+
+                <Button
+                    android:id="@+id/btnFirefoxIndir"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="Offline Translator'ı indir (F-Droid)" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- ======================= ALTYAZI BÖLGESİ ======================= -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/secRegion"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginTop="12dp"
+            app:cardBackgroundColor="?attr/colorSurface"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="0dp"
+            app:strokeColor="?attr/colorOutline"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="20dp">
+
+                <TextView
+                    style="@style/LingoLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Nereye bakılsın" />
+
+                <TextView
+                    style="@style/LingoTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Altyazı bölgesi" />
+
+                <TextView
+                    android:id="@+id/tvRegion"
+                    style="@style/LingoHint"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Varsayılan çoğu oyuna ve diziye uyar." />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnRegion"
+                    style="@style/Widget.Material3.Button.OutlinedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:text="Alanı ekranda seç" />
+
+                <TextView
+                    style="@style/GlTileHint"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:text="HIZLI KONUM" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:baselineAligned="false"
+                    android:orientation="horizontal">
+
+                    <Button
+                        android:id="@+id/btnRegionBottom"
+                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:paddingStart="4dp"
+                        android:paddingEnd="4dp"
+                        android:text="Alt bölge" />
+
+                    <Button
+                        android:id="@+id/btnRegionTop"
+                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="6dp"
+                        android:layout_weight="1"
+                        android:paddingStart="4dp"
+                        android:paddingEnd="4dp"
+                        android:text="Üst bölge" />
+
+                    <Button
+                        android:id="@+id/btnRegionFull"
+                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="6dp"
+                        android:layout_weight="1"
+                        android:paddingStart="4dp"
+                        android:paddingEnd="4dp"
+                        android:text="Tam ekran" />
+                </LinearLayout>
+
+                <TextView
+                    style="@style/LingoHint"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Alt bölge çoğu oyuna ve diziye uyar. Tam ekran her yazıyı okur: daha yavaştır, menü ve arayüz yazıları da altyazı sanılabilir." />
+
+                <TextView
+                    android:id="@+id/tvTopPct"
+                    style="@style/LingoHint"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:text="Üst sınır" />
+
+                <SeekBar
+                    android:id="@+id/sbTop"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:max="100" />
+
+                <TextView
+                    android:id="@+id/tvBottomPct"
+                    style="@style/LingoHint"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Alt sınır" />
+
+                <SeekBar
+                    android:id="@+id/sbBottom"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:max="100" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- ======================= ALTYAZI GÖRÜNÜMÜ ======================= -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/secLook"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginTop="12dp"
+            app:cardBackgroundColor="?attr/colorSurface"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="0dp"
+            app:strokeColor="?attr/colorOutline"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="20dp">
+
+                <TextView
+                    style="@style/LingoLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Nasıl görünsün" />
+
+                <TextView
+                    style="@style/LingoTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Altyazı görünümü" />
+
+                <!-- Canlı önizleme: ayarlar değiştikçe bu kutu da değişir -->
+                <FrameLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:background="@drawable/bg_preview"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:id="@+id/tvPreview"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:text="Işığı söndür, çabuk!"
+                        android:textAlignment="center" />
+                </FrameLayout>
+
+                <TextView
+                    android:id="@+id/tvSubSize"
+                    style="@style/LingoHint"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp" />
+
+                <SeekBar
+                    android:id="@+id/sbSubSize"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:max="22" />
+
+                <TextView
+                    style="@style/LingoHint"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:text="Yazı rengi" />
+
+                <com.google.android.material.chip.ChipGroup
+                    android:id="@+id/cgSubColor"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    app:selectionRequired="true"
+                    app:singleSelection="true">
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/chColWhite"
+                        style="@style/Widget.Material3.Chip.Filter"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Beyaz" />
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/chColYellow"
+                        style="@style/Widget.Material3.Chip.Filter"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Sarı" />
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/chColGreen"
+                        style="@style/Widget.Material3.Chip.Filter"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Yeşil" />
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/chColCyan"
+                        style="@style/Widget.Material3.Chip.Filter"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Turkuaz" />
+                </com.google.android.material.chip.ChipGroup>
+
+                <TextView
+                    style="@style/LingoHint"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:text="Arka plan" />
+
+                <com.google.android.material.chip.ChipGroup
+                    android:id="@+id/cgSubBg"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    app:selectionRequired="true"
+                    app:singleSelection="true">
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/chBgSemi"
+                        style="@style/Widget.Material3.Chip.Filter"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Yarı saydam" />
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/chBgSolid"
+                        style="@style/Widget.Material3.Chip.Filter"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Tam dolu" />
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/chBgNone"
+                        style="@style/Widget.Material3.Chip.Filter"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Yok" />
+                </com.google.android.material.chip.ChipGroup>
+
+                <TextView
+                    style="@style/LingoHint"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:text="Arka plan rengi" />
+
+                <com.google.android.material.chip.ChipGroup
+                    android:id="@+id/cgSubBgColor"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    app:selectionRequired="true"
+                    app:singleSelection="true">
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/chBgcBlack"
+                        style="@style/Widget.Material3.Chip.Filter"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Siyah" />
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/chBgcGray"
+                        style="@style/Widget.Material3.Chip.Filter"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Koyu gri" />
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/chBgcNavy"
+                        style="@style/Widget.Material3.Chip.Filter"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Lacivert" />
+                </com.google.android.material.chip.ChipGroup>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginTop="18dp"
+                    android:background="?attr/colorOutline" />
+
+                <TextView
+                    style="@style/LingoHint"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:text="Konum" />
+
+                <RadioGroup
+                    android:id="@+id/rgSubPos"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <RadioButton
+                        android:id="@+id/rbPosAbove"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:paddingStart="6dp"
+                        android:text="Şeridin üstünde · İngilizce de görünür" />
+
+                    <RadioButton
+                        android:id="@+id/rbPosCover"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:paddingStart="6dp"
+                        android:text="Şeridin üstünü kapat · İngilizceyi örter" />
+
+                    <RadioButton
+                        android:id="@+id/rbPosBelow"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:paddingStart="6dp"
+                        android:text="İngilizcenin hemen altında · İngilizce de görünür" />
+
+                    <RadioButton
+                        android:id="@+id/rbPosBottom"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:paddingStart="6dp"
+                        android:text="Ekranın altı · Tek uygulama yakalama kullanın" />
+                </RadioGroup>
+
+                <CheckBox
+                    android:id="@+id/cbOutline"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:paddingStart="6dp"
+                    android:text="Yazıya koyu kenarlık ekle" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- ========================== GELİŞMİŞ ========================== -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/secAdvanced"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:layout_marginTop="12dp"
+            app:cardBackgroundColor="?attr/colorSurface"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="0dp"
+            app:strokeColor="?attr/colorOutline"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="20dp">
+
+                <TextView
+                    android:id="@+id/tvAdvancedHeader"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingTop="4dp"
+                    android:paddingBottom="4dp"
+                    android:text="Gelişmiş ▸"
+                    android:textColor="?attr/colorOnSurface"
+                    android:textSize="19sp"
+                    android:textStyle="bold" />
+
+                <LinearLayout
+                    android:id="@+id/boxAdvanced"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <TextView
+                        style="@style/LingoLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:text="İnternet yapay zekâsı (isteğe bağlı)" />
+
+                    <TextView
+                        style="@style/LingoHint"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Çevrim dışı kullanım için ilk seçenek seçili kalsın. İkincisi internet ve API anahtarı ister; anahtar yoksa uygulama kendiliğinden çevrim dışı çalışır." />
+                    <RadioGroup
+                        android:id="@+id/rgMode"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:orientation="vertical">
+
+                        <RadioButton
+                            android:id="@+id/rbInstant"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:paddingStart="6dp"
+                            android:text="Çevrim dışı · telefondaki yapay zekâ (model yoksa hızlı çeviri)" />
+
+                        <RadioButton
+                            android:id="@+id/rbAi"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:paddingStart="6dp"
+                            android:text="İnternet · çeviriyi sunucu yapar, API anahtarı gerekir" />
+
+                        <RadioButton
+                            android:id="@+id/rbHybrid"
+                    android:visibility="gone"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:paddingStart="6dp"
+                            android:text="İnternet karma · API anahtarı gerekir" />
+                    </RadioGroup>
+
+                    <TextView
+                        style="@style/LingoLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:text="Çeviri sağlayıcısı" />
+
+                    <RadioGroup
+                        android:id="@+id/rgProvider"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:orientation="vertical">
+
+                        <RadioButton
+                            android:id="@+id/rbGemini"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:paddingStart="6dp"
+                            android:text="Google Gemini · ücretsiz katmanı var" />
+
+                        <RadioButton
+                            android:id="@+id/rbAnthropic"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:paddingStart="6dp"
+                            android:text="Anthropic · ücretli" />
+                    </RadioGroup>
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="14dp"
+                        android:hint="Google AI Studio anahtarı">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/etGeminiKey"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:importantForAutofill="no"
+                            android:inputType="textVisiblePassword" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:hint="Anthropic API anahtarı">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/etKey"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:importantForAutofill="no"
+                            android:inputType="textVisiblePassword" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        style="@style/Widget.Material3.TextInputLayout.OutlinedBox"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:hint="Model">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/etModel"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:importantForAutofill="no"
+                            android:inputType="text" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnFindModels"
+                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:text="Modelleri bul" />
+
+                    <TextView
+                        android:id="@+id/tvModels"
+                        style="@style/LingoHint"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" />
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginTop="18dp"
+                        android:background="?attr/colorOutline" />
+
+                    <TextView
+                        style="@style/LingoLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:text="Tarama sıklığı" />
+
+                    <TextView
+                        android:id="@+id/tvSpeed"
+                        style="@style/LingoHint"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" />
+
+                    <SeekBar
+                        android:id="@+id/sbSpeed"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:max="900" />
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginTop="12dp"
+                        android:background="?attr/colorOutline" />
+
+                    <TextView
+                        style="@style/LingoLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:text="Sorun giderme" />
+
+                    <CheckBox
+                        android:id="@+id/cbDiag"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:paddingStart="6dp"
+                        android:text="Tanılama: sorun olursa sebebini ekranda göster" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnPreview"
+                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="Ne görüyor? (ekran önizlemesi)" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnCopyLog"
+                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="Çalışma kaydını kopyala" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnClearLog"
+                        style="@style/Widget.Material3.Button.OutlinedButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="Çalışma kaydını temizle · sonra oyuna dön, tek bir sahne oyna" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnCopyError"
+                        style="@style/Widget.Material3.Button.TextButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Son hatayı kopyala" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnClearError"
+                        style="@style/Widget.Material3.Button.TextButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Son hatayı sil" />
+
+                    <TextView
+                        android:id="@+id/tvError"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="monospace"
+                        android:textColor="?attr/colorOnSurfaceVariant"
+                        android:textSize="11sp" />
+                </LinearLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+
+    </LinearLayout>
+</ScrollView>
+
+    <!-- ============================ ALT MENÜ ============================ -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_navbar"
+        android:orientation="horizontal"
+        android:paddingTop="2dp">
+
+        <TextView
+            android:id="@+id/navHome"
+            style="@style/GlNav"
+            android:textColor="?attr/colorPrimary"
+            android:drawableTop="@drawable/ic_gl_home"
+            android:text="Ana sayfa" />
+        <TextView
+            android:id="@+id/navSettings"
+            style="@style/GlNav"
+            android:drawableTop="@drawable/ic_gl_settings"
+            android:text="Ayarlar" />
+        <TextView
+            android:id="@+id/navHistory"
+            style="@style/GlNav"
+            android:drawableTop="@drawable/ic_gl_history"
+            android:text="Geçmiş" />
+        <TextView
+            android:id="@+id/navHelp"
+            style="@style/GlNav"
+            android:drawableTop="@drawable/ic_gl_help"
+            android:text="Yardım" />
+    </LinearLayout>
+</LinearLayout>

@@ -1,0 +1,437 @@
+{
+  "summary": {
+    "PASS": 52,
+    "FAIL": 9,
+    "MISSING": 0,
+    "TIMEOUT": 0
+  },
+  "results": [
+    {
+      "test": "test_512.py",
+      "state": "PASS",
+      "seconds": 5.61,
+      "code": 0,
+      "detail": "1) satır seçimi tamam\n2) örnek: Hey, what's up? you guys trying to smoke?\n5) 3 sn'de 4 okuma (okuma 450 ms) → bir tur ≈ 750 ms\n5.12 testi geçti.\n"
+    },
+    {
+      "test": "test_ad_eki.py",
+      "state": "PASS",
+      "seconds": 1.26,
+      "code": 0,
+      "detail": "Ad eki + sayı + tuş + çöp + YZ + hafıza + ortak baş + Türkçe + konuşan + ad-denetim + HUD testi geçti.\n"
+    },
+    {
+      "test": "test_arayuz.py",
+      "state": "PASS",
+      "seconds": 3.49,
+      "code": 0,
+      "detail": "Sürüm: 5.15\nDüğmeler: ['Bilgisayar', 'Chrome çevirisi', 'Telefonun yapay zekâsı', 'Dil paketini indir', 'Dosyadan ekle', 'Telefonu bul ve bağlan', 'Oyun', 'Dizi', 'Film', 'Belgesel', 'Video', 'Bölgeyi ekranda göster', 'Başlat', 'Kaydı göster', 'Kaydı kopyala']\nDil paketi: ['indir', ('dosya', '/tmp/en_tr.argosmodel')]\nChrome seçeneği tamam\nArayüz hatasız kuruldu, bütün düğmeler çalıştı, Gemini kalktı.\n"
+    },
+    {
+      "test": "test_bitisik.py",
+      "state": "PASS",
+      "seconds": 1.76,
+      "code": 0,
+      "detail": "Örnek: at this point I really don't give a fuck.\nBitişik kelime ve hızlı OCR testi geçti.\n"
+    },
+    {
+      "test": "test_bozuk.py",
+      "state": "PASS",
+      "seconds": 2.17,
+      "code": 0,
+      "detail": "Bozuk okuma / bölge testi geçti.\n"
+    },
+    {
+      "test": "test_dongu.py",
+      "state": "PASS",
+      "seconds": 6.42,
+      "code": 0,
+      "detail": "Ekran yakalama sayısı: 12\nOCR'a giden biçim: {'ndim': 3, 'kanal': 3, 'contiguous': True, 'dtype': 'uint8'}\nEkrana yazılan: Bir dakika\nDurum satırları: [\"Çeviri motoru yüklenemedi (ModuleNotFoundError: No module named 'ctranslate2'). Telefon seçeneğini kullanın.\"]\n\nUçtan uca test geçti: ekran okundu, çeviri kutuya yazıldı, hata yok.\n"
+    },
+    {
+      "test": "test_ekran.py",
+      "state": "PASS",
+      "seconds": 1.27,
+      "code": 0,
+      "detail": "Ekran yakalama testi geçti (tek sanal ekran, kurtarma güvenli, const val yerinde).\n"
+    },
+    {
+      "test": "test_filtre.py",
+      "state": "PASS",
+      "seconds": 1.16,
+      "code": 0,
+      "detail": "Filtre testi temiz: 13 cop satiri engellendi, 8 gercek altyazi gecti.\n"
+    },
+    {
+      "test": "test_harf.py",
+      "state": "PASS",
+      "seconds": 1.07,
+      "code": 0,
+      "detail": "Harf düzeltme testi geçti.\n"
+    },
+    {
+      "test": "test_hata.py",
+      "state": "PASS",
+      "seconds": 2.34,
+      "code": 0,
+      "detail": "Durum satırı örneği: Çeviri motoru yüklenemedi (ModuleNotFoundError: No module named 'ctranslate2'). Telefon seçeneğini kullanın.\nDöngü OCR hatasından sonra hayatta: True\n"
+    },
+    {
+      "test": "test_hata_eslesme.py",
+      "state": "PASS",
+      "seconds": 1.2,
+      "code": 0,
+      "detail": "Hata eslesme testi temiz: 404 mesaji \"Model bulunamadı. MODELLERİ ...\" kontrollerle eslesiyor, devre kesici bagli.\n"
+    },
+    {
+      "test": "test_hata_kaydi.py",
+      "state": "PASS",
+      "seconds": 1.32,
+      "code": 0,
+      "detail": "Hata kaydı testi geçti (sürüm 10.42.7-bottom-ocr-log-stability, kurulum damgası devrede).\nKayıt temizleme ve eleme sebebi testi geçti.\n"
+    },
+    {
+      "test": "test_hiz.py",
+      "state": "PASS",
+      "seconds": 6.23,
+      "code": 0,
+      "detail": "4 sn'de 11 okuma, işlemci payı ≈ %55\nHız testi geçti.\n"
+    },
+    {
+      "test": "test_isim_hud.py",
+      "state": "PASS",
+      "seconds": 1.04,
+      "code": 0,
+      "detail": "İsim koruma + OCR yazım + arayüz süzgeci + YZ denetimi testi geçti (78 isim, 113 I-fiili, 10 gerçek altyazı).\n"
+    },
+    {
+      "test": "test_metin.py",
+      "state": "PASS",
+      "seconds": 1.02,
+      "code": 0,
+      "detail": "Metin onarim testi temiz: 6 bozulma duzeldi, 23 gercek kelime ve 3 cumle korundu; 1->I: 16 duzeltme, 13 sayi korundu.\n"
+    },
+    {
+      "test": "test_model_alani.py",
+      "state": "PASS",
+      "seconds": 0.94,
+      "code": 0,
+      "detail": "Model alani testi temiz: kutu secili saglayicinin alanina baglaniyor.\n"
+    },
+    {
+      "test": "test_pc.py",
+      "state": "PASS",
+      "seconds": 2.81,
+      "code": 0,
+      "detail": "1) Metin onarımı\n  ✓ kesme işareti geri geliyor\n  ✓ üç nokta ve boşluk temizleniyor\n2) Konuşan ayırma\n  ✓ isim ayrılıyor\n  ✓ saat gibi metinde ayırma yok\n3) Kalıp sözlüğü\n  ✓ Hold on → Bir dakika\n  ✓ Watch out → Dikkat et\n4) OCR'a giden görüntünün biçimi (bugünkü hatanın tam yeri)\n  ✓ OCR'a bitişik dizi gidiyor\n  ✓ 3 kanallı\n  ✓ uint8\n  ✓ okunan metin geri dönüyor\n5) Kare değişmedi diye atlama mantığı\n  ✓ aynı kare atlanıyor\n  ✓ değişen kare atlanmıyor\n6) Çeviri zinciri (kalıp → hafıza → yapay zekâ)\n  ✓ kalıp sözlüğünden anında çeviri\n  ✓ hafızadan çeviri\n7) Yapay zekâ sırası: aynı anda tek istek, hep en yenisi\n  ✓ ilk ve en son satır çevrildi, aradakiler atlandı\n  ✓ ekranda en son satırın yapay zekâ çevirisi\n8) Benzerlik: yeni replik yeni sayılıyor\n  ✓ aynı cümle benzer\n  ✓ farklı cümle benzer değil\n9) Çeviri kaynağı seçilebiliyor (Gemini yok)\n  ✓ varsayılan: bilgisayarın kendi çevirisi\n  ✓ telefon seçilince köprü\n  ✓ ayarlarda Gemini alanı yok\n10) Takılan yazı temizleme süresi\n  ✓ gösterim zamanı işleniyor\n\nTüm testler geçti.\n"
+    },
+    {
+      "test": "test_pc_ocr.py",
+      "state": "PASS",
+      "seconds": 1.51,
+      "code": 0,
+      "detail": "PC OCR onarımı testi geçti (10 düzeltme, 15 bozulmama, tekrar süzgeci dahil).\n"
+    },
+    {
+      "test": "test_ses_etiketi.py",
+      "state": "PASS",
+      "seconds": 1.23,
+      "code": 0,
+      "detail": "Ses etiketi testi geçti (559 kelime, 75 kalıp, 40 devam biçimi).\n"
+    },
+    {
+      "test": "test_sozluk.py",
+      "state": "PASS",
+      "seconds": 1.95,
+      "code": 0,
+      "detail": "Sözlüklü OCR onarımı testi geçti (124216 kelime, 326 KB varlık, 44 ek).\n"
+    },
+    {
+      "test": "test_taslak_akisi.py",
+      "state": "PASS",
+      "seconds": 3.12,
+      "code": 0,
+      "detail": "1) [(0.05, 'taslak:Watch out behind you.', True), (1.05, 'YZ:Watch out behind you.', False)]\n2) [(0.05, 'taslak:First line here.', True)]\n3) [(0.05, 'taslak:No time left.', True), (0.15, 'taslak:No time left.', False)] ['Yapay zekâ çeviremedi, hızlı çeviri gösteriliyor: model meşgul']\nKayıttan: ['15:35:40  YAZILAN · taslak 50 ms: taslak:First line here.', '15:35:41  YAZILAN · yapay zekâ 800 ms (geç kaldı, hafızaya alındı): YZ:First line here.', '15:35:41  YAZILAN · taslak 50 ms: taslak:No time left.', '15:35:41  HATA: Yapay zekâ çeviremedi, hızlı çeviri gösteriliyor: model meşgul']\nTaslak akışı testi geçti.\n"
+    },
+    {
+      "test": "test_telefon_kopru.py",
+      "state": "PASS",
+      "seconds": 1.42,
+      "code": 0,
+      "detail": "Telefon tarafı: sahte sunucu\nBağlan: Telefon bağlı ✓ (172.26.39.253)\nÇeviri 1: Dışarıda bekliyor. [tür=Oyun ad=The Last of Us önceki=0]\nTaslak: hızlı: He is waiting outside. 0 ms\nTelefon köprüsü testi geçti.\n"
+    },
+    {
+      "test": "test_turkce.py",
+      "state": "PASS",
+      "seconds": 1.08,
+      "code": 0,
+      "detail": "Turkce duzeltme testi temiz: 5 soru eki duzeldi, 5 dogru cumle korundu, 6 ses etiketi eslesti.\n"
+    },
+    {
+      "test": "test_yerel_ceviri.py",
+      "state": "PASS",
+      "seconds": 7.46,
+      "code": 0,
+      "detail": "1) kitaplık yok: Çeviri motoru yüklenemedi (ModuleNotFoundError: No module named 'ctran\n2) ilk açılış: Çeviri modeli aranıyor (yalnızca ilk sefer)... | Çeviri modeli indiriliyor %100 (0 MB) — yalnızca ilk sefer | Çeviri modeli yükleniyor... | Dil paketi hazır ✓ Bilgisayar kendisi çeviriyor.\n3) çeviri: Nereye gidiyorsun? (0 ms)\n6) internet yok: Çeviri modeli hazırlanamadı: liste 127.0.0.1:1: URLError: <urlopen error [Errno \n7) motor: 15:35:50  YAZILAN · bilgisayar çevirisi 0 ms: Nereye gidiyorsun?\n9) model testi: SONUÇ: GEÇTİ\n10) düğmeler: Dil paketi açılamadı: BadZipFile: File is not a zip file\nDil paketi: /tmp/tmp_l5155gq/en_tr.argosmodel (0 MB)\nDil paketi yok (model testi indirmemiş).\n11) dışa aktarılan paket ve GitHub zip'i kuruldu\n12) 403: Çeviri modeli hazırlanamadı: 127.0.0.1:42263: HTTPError: HTTP Error 403: Forbidden. \"Dosyadan ekle\" ile paketi\nBilgisayar çevirisi testi geçti.\n"
+    },
+    {
+      "test": "test_winocr.py",
+      "state": "PASS",
+      "seconds": 1.29,
+      "code": 0,
+      "detail": "9) RapidOCR: \"Hold on\" · ilk 0 ms, sonra ort. 0 ms\nWindows OCR testi geçti.\n"
+    },
+    {
+      "test": "test_denetleyici.py",
+      "state": "FAIL",
+      "seconds": 6.31,
+      "code": 1,
+      "detail": "Denetleyici testi DÜŞTÜ:\n  ✗ yanlış alarm (gerçek hata bunun arasında kaybolur): ✗ CaptureService.kt → tanımlı olmayan fonksiyon çağrısı: listOfNotNull()\n  ✗ yanlış alarm (gerçek hata bunun arasında kaybolur): ✗ EngineBenchmark1035.kt → fun persist() içinde tanımsız olabilir: context\n  ✗ yanlış alarm (gerçek hata bunun arasında kaybolur): ✗ EngineBenchmark1035.kt → fun progress() içinde tanımsız olabilir: onProgress\n  ✗ yanlış alarm (gerçek hata bunun arasında kaybolur): ✗ EngineBenchmark1035.kt → tanımlı olmayan fonksiyon çağrısı: appendLine()\n  ✗ yanlış alarm (gerçek hata bunun arasında kaybolur): ✗ OpusSentencePiece.kt → fun skip() içinde tanımsız olabilir: bytes\n  ✗ yanlış alarm (gerçek hata bunun arasında kaybolur): ✗ OpusSentencePiece.kt → tanımlı olmayan fonksiyon çağrısı: shl()\n"
+    },
+    {
+      "test": "test_cagri_denetimi.py",
+      "state": "PASS",
+      "seconds": 6.33,
+      "code": 0,
+      "detail": "Çağrı denetleyicisi testi geçti (kaynak temiz, 2 gerçek hata yakalandı).\n"
+    },
+    {
+      "test": "test_argo.py",
+      "state": "PASS",
+      "seconds": 1.48,
+      "code": 0,
+      "detail": "Argo zinciri testi geçti (Slang 20 kelime kuralı + SlangNormalizer 157 dilbilgisi kuralı, kopya yok; 18 dönüşüm, 4 koruma).\n"
+    },
+    {
+      "test": "test_cop_okuma.py",
+      "state": "PASS",
+      "seconds": 1.44,
+      "code": 0,
+      "detail": "Çöp okuma testi geçti (11 sağlam satır korundu, 2 çöp yakalandı, 37 argo muaf).\n"
+    },
+    {
+      "test": "test_yigin.py",
+      "state": "FAIL",
+      "seconds": 1.15,
+      "code": 1,
+      "detail": "Yığın testi DÜŞTÜ:\n  ✗ üst sıra setSubtitle'a bağlanmamış\n"
+    },
+    {
+      "test": "test_yz_denetim.py",
+      "state": "PASS",
+      "seconds": 1.04,
+      "code": 0,
+      "detail": "Yapay zekâ denetim testi geçti (7 bozma yakalandı, 13 doğru çeviri geçti, 7 korunan kalıp).\n"
+    },
+    {
+      "test": "test_yz_tetik.py",
+      "state": "PASS",
+      "seconds": 1.09,
+      "code": 0,
+      "detail": "Yapay zekâ tetik testi geçti (439 kalıp, 12 hitap; 7 satır korunur, 5 satır denetlenir).\n"
+    },
+    {
+      "test": "test_bosluk_taramasi.py",
+      "state": "PASS",
+      "seconds": 1.27,
+      "code": 0,
+      "detail": "Boşluk taraması temiz (559 ses sözcüğü, 75 kalıp, 621 sözlük girdisi, 229 aday kelime tarandı).\n"
+    },
+    {
+      "test": "test_yol_kapsamasi.py",
+      "state": "PASS",
+      "seconds": 1.14,
+      "code": 0,
+      "detail": "Yol kapsaması temiz (5 yapay zekâ denetimi, 5 yzDuzelt çağrısı, ham çıktı yayını yok).\n"
+    },
+    {
+      "test": "test_tezgah.py",
+      "state": "FAIL",
+      "seconds": 6.54,
+      "code": 1,
+      "detail": "150 ipucu derlendi.\nDenetim temiz: seslenme onarimi, kirinti kurali ve ipuclari beklendigi gibi.\nPicked up JAVA_TOOL_OPTIONS:\nsozluk: 621 kalip, 10 ad, 20 argo, 157 dilbilgisi, 25 kufur kurali\n78 replik, 74 tanesi tamamen sozlukten.\nTezgah temiz: 26 dakikalik kayittaki her replik beklendigi gibi cevrildi.\nPicked up JAVA_TOOL_OPTIONS:\n559 ses sozcugu, 75 kalip.\nSes etiketi testi gecti: kirpilan etiketler ve bozuk parantezler onarildi.\nPicked up JAVA_TOOL_OPTIONS:\nsozluk 124216 kelime, ADAY=\\b\\p{Lu}[\\p{L}]{2,}\\b, her-zaman-ad 3\nKalkan testi gecti: ozel adlar korunuyor, gercek kelimeler dokunulmuyor.\nPicked up JAVA_TOOL_OPTIONS:\nsozluk 124216, kisaltma 31, esik 3\n  korpus: 372 komsu cift, ayni sayilan 0\nSuslu yazi testi gecti: cop kirpiliyor, gercek replikler dokunulmuyor.\nPicked up JAVA_TOOL_OPTIONS:\nsozluk 124216, nota 11, kisa-gercek 34, kesme 2+1x19\n  ozellik: 1016 ingilizce satir degismezlik=TAMAM, 956/1579 temiz turkce satir dokunulmadi=TAMAM\nOnarim testi gecti: nota, hitap parantezi, bolunmus kelime, kesme, cop on ek.\nPicked up JAVA_TOOL_OPTIONS:\nPicked up JAVA_TOOL_OPTIONS: \nException in thread \"main\" java.lang.RuntimeException: SIRA BOZUK: AdDefteri.ogren, ceviriden SONRA cagriliyor — satirin kendi adlari o satirda korunmaz.\n\tat Defter.yukle(Defter.java:72)\n\tat Defter.main(Defter.java:227)\nBAŞARISIZ: tezgâh 1 bölümde düştü\n"
+    },
+    {
+      "test": "test_katman.py",
+      "state": "PASS",
+      "seconds": 1.64,
+      "code": 0,
+      "detail": "Katman testi geçti: sıra SÖZLÜK -> HAFIZA -> TASLAK -> YZ, seslenme onarımı iki yolda da devrede.\n"
+    },
+    {
+      "test": "test_talimat.py",
+      "state": "PASS",
+      "seconds": 1.15,
+      "code": 0,
+      "detail": "Talimat testi geçti: telefon ve API talimatı aynı maddeleri taşıyor, OCR onarımları yerinde.\n"
+    },
+    {
+      "test": "test_kurtarma.py",
+      "state": "PASS",
+      "seconds": 1.12,
+      "code": 0,
+      "detail": "Kurtarma testi geçti: dönme sonrası yenileme vazgeçmiyor, aralık kademeli ve kayıt gürültüsü sınırlı.\n"
+    },
+    {
+      "test": "test_etiket_sirasi.py",
+      "state": "PASS",
+      "seconds": 1.03,
+      "code": 0,
+      "detail": "Etiket sırası testi geçti: inlineTag -> openSpeaker -> tagPrefix, küçük harf şartı ve koşullu 'I -> [' onarımı yerinde.\n"
+    },
+    {
+      "test": "test_kutup.py",
+      "state": "PASS",
+      "seconds": 1.14,
+      "code": 0,
+      "detail": "Kutup testi geçti: 79 gerçek olumsuz çeviride yanlış alarm yok, 6 tersine dönme yakalandı, asimetri korunuyor.\n"
+    },
+    {
+      "test": "test_kalip.py",
+      "state": "PASS",
+      "seconds": 2.04,
+      "code": 0,
+      "detail": "Kalıp testi geçti [ICU (Android motoru) + masaüstü Java]: 395 regex literali derlendi, 17 şablonlu kalıp atlandı (AiGuard.kt:320, AiGuard.kt:333, AiGuard.kt:400, OcrSozluk.kt:829, OcrSozluk.kt:838, OfflineFix.kt:1154, OfflineFix.kt:1187, OfflineFix.kt:1256, OfflineFix.kt:1306, OfflineFix.kt:3115, Slang.kt:207, Slang.kt:257, TextFix.kt:258, TurkishFix.kt:114, TurkishFix.kt:137, TurkishFix.kt:138, TurkishFix.kt:228).\n"
+    },
+    {
+      "test": "test_kufur_siniri.py",
+      "state": "PASS",
+      "seconds": 1.06,
+      "code": 0,
+      "detail": "Küfür sınırı testi geçti: 41 günlük kelimede yanlış eşleşme yok, 19 gerçek küfür yakalanıyor.\n"
+    },
+    {
+      "test": "test_ayna.py",
+      "state": "PASS",
+      "seconds": 0.95,
+      "code": 0,
+      "detail": "Ayna testi geçti: ürün ve tezgâh aynı harf davranışını paylaşıyor, 157 argo kalıbında çift kayıt yok.\n"
+    },
+    {
+      "test": "test_unicode.py",
+      "state": "FAIL",
+      "seconds": 1.09,
+      "code": 1,
+      "detail": "BAŞARISIZ:\n  - ClauseRecovery1042.kt:9  gömülü bayrak 'u' ICU'da (Android) geçersiz: (?iu)\\b(?:ve|ama|fakat|ancak|çünkü|sonra|ardından)\\b — uygulama açılışta çöker.\n  - DialogueDisambiguation1038.kt:11  gömülü bayrak 'u' ICU'da (Android) geçersiz: (?iu)\\bsağ\\s*\\?$ — uygulama açılışta çöker.\n  - DialogueDisambiguation1038.kt:12  gömülü bayrak 'u' ICU'da (Android) geçersiz: (?iu)\\b(?:poindexter|pointexter)(?:['’]sın)?\\b — uygulama açılışta çöker.\n  - DialogueDisambiguation1038.kt:13  gömülü bayrak 'u' ICU'da (Android) geçersiz: (?iu)kuşlar\\s+ve\\s+arılar — uygulama açılışta çöker.\n  - DialogueDisambiguation1038.kt:14  gömülü bayrak 'u' ICU'da (Android) geçersiz: (?iu)kardeşlik\\s+kızı — uygulama açılışta çöker.\n  - DialogueDisambiguation1038.kt:21  gömülü bayrak 'u' ICU'da (Android) geçersiz: (?iu)\\.\\s+değil mi\\?$ — uygulama açılışta çöker.\n  - DialogueDisambiguation1038.kt:39  gömülü bayrak 'u' ICU'da (Android) geçersiz: (?iu)\\bsiparişleriniz\\b — uygulama açılışta çöker.\n  - DialogueDisambiguation1038.kt:46  gömülü bayrak 'u' ICU'da (Android) geçersiz: (?iu)(?<!\\p{L})intikamınızı\\s+aldınız(?!\\p{L}) — uygulama açılışta çöker.\n  - DialogueDisambiguation1038.kt:55  gömülü bayrak 'u' ICU'da (Android) geçersiz: (?iu)işaret\\? — uygulama açılışta çöker.\n  - DialogueDisambiguation1038.kt:56  gömülü bayrak 'u' ICU'da (Android) geçersiz: (?iu)işaret\\? — uygulama açılışta çöker.\n  - DialogueDisambiguation1038.kt:64  gömülü bayrak 'u' ICU'da (Android) geçersiz: (?iu)you['’]?dekiler\\s+en\\s+iyisidir\\.? — uygulama açılışta çöker.\n  - DialogueDisambiguation1038.kt:69  gömülü bayrak 'u' ICU'da (Android) geçersiz: (?iu)burada\\s+sadece\\s+tükürük\\s+topları — uygulama açılışta çöker.\n  - DialogueDisambiguation1038.kt:70  gömülü bayrak 'u' ICU'da (Android) geçersiz: (?iu)^ve\\s+burada\\s+sadece\\s+tükürük\\s+topları\\.?$ — uygulama açılışta çöker.\n  - DialogueDisambiguation1038.kt:77  gömülü bayrak 'u' ICU'da (Android) geçersiz: (?iu)doldurmam\\s+gereken\\s+büyük\\s+bir\\s+yer\\s+var — uygulama açılışta çöker.\n  - DialogueDisambiguation1038.kt:82  gömülü bayrak 'u' ICU'da (Android) geçersiz: (?iu)(?:çok\\s+)?güzel\\s+görünüyorsun — uygulama açılışta çöker.\n  - DialogueDisambiguation1038.kt:83  gömülü bayrak 'u' ICU'da (Android) geçersiz: (?iu)(?:çok\\s+)?güzel\\s+görünüyorsun — uygulama açılışta çöker.\n  - DialogueDisambiguation1038.kt:90  gömülü bayrak 'u' ICU'da (Android) geçersiz: (?iu)(?<!\\p{L})(?:sırtını|belini)\\s+işten\\s+attı(?!\\p{L}) — uygulama açılışta çöker.\n  - DialogueDisambiguation1038.kt:97  gömülü bayrak 'u' ICU'da (Android) geçersiz: (?iu)(?<!\\p{L})bir\\s+şey\\s+olmaz(?!\\p{L}) — uygulama açılışta çöker.\n  - GameplayLogRepair299.kt:106  gömülü bayrak 'u' ICU'da (Android) geçersiz: (?iu)\\\\bBronze\\\\s+ve\\\\s+Essence(?:['’](?:ü|u|i|yi|yü))? — uygulama açılışta çöker.\n  - GameplayLogRepair299.kt:109  gömülü bayrak 'u' ICU'da (Android) geçersiz: (?iu)\\\\bSha\\\\s+ve\\\\s+Chi(?:['’](?:ü|u|i|yi|yü))? — uygulama açılışta çöker.\n  - GameplayLogRepair299.kt:112  gömülü bayrak 'u' ICU'da (Android) geçersiz: (?iu)\\\\bPerfect\\\\s+ve\\\\s+Transcension\\\\b — uygulama açılışta çöker.\n  - GameplayLogRepair299.kt:117  gömülü bayrak 'u' ICU'da (Android) geçersiz: (?iu)\\\\bHollow\\\\s+ve\\\\s+Heart(?:['’](?:yi|yı|i|ı|ü|u))? — uygulama açılışta çöker.\n  - GameplayLogRepair299.kt:120  gömülü bayrak 'u' ICU'da (Android) geçersiz: (?iu)\\\\bXie\\\\s+ve\\\\s+Huichun\\\\b — uygulama açılışta çöker.\n  - GameplayLogRepair299.kt:123  gömülü bayrak 'u' ICU'da (Android) geçersiz: (?iu)\\\\bMeigu\\\\s+ve\\\\s+Lake(?:['’](?:in|nin|ı|i))? — uygulama açılışta çöker.\n  - GameplayLogRepair299.kt:126  gömülü bayrak 'u' ICU'da (Android) geçersiz: (?iu)\\\\bWhite[, ]+Serpent\\\\s+ve\\\\s+House\\\\b — uygulama açılışta çöker.\n  - GameplayLogRepair299.kt:129  gömülü bayrak 'u' ICU'da (Android) geçersiz: (?iu)\\\\bPhantom\\\\s+(?:ile|ve)\\\\s+Edge\\\\b — uygulama açılışta çöker.\n  - GameplayLogRepair299.kt:136  gömülü bayrak 'u' ICU'da (Android) geçersiz: (?iu)\\\\bChang[,]?\\\\s+Hong\\\\s+ile\\\\s+Lei[,]?\\\\s+Dang\\\\b — uygulama açılışta çöker.\n  - GameplayLogRepair299.kt:139  gömülü bayrak 'u' ICU'da (Android) geçersiz: (?iu)\\\\bHeart-Carving\\\\s+(?:ve|ile)\\\\s+Art\\\\b — uygulama açılışta çöker.\n  - GameplayLogRepair299.kt:142  gömülü bayrak 'u' ICU'da (Android) geçersiz: (?iu)\\\\bMirage\\\\s+ve\\\\s+Estate\\\\b — uygulama açılışta çöker.\n  - GameplayLogRepair299.kt:145  gömülü bayrak 'u' ICU'da (Android) geçersiz: (?iu)\\\\bSenior[,]?\\\\s+Brother\\\\b — uygulama açılışta çöker.\n  - GameplayLogRepair299.kt:148  gömülü bayrak 'u' ICU'da (Android) geçersiz: (?iu)\\\\bJunior[,]?\\\\s+Brother\\\\b — uygulama açılışta çöker.\n  - LiveSubtitleQuality10425.kt:25  gömülü bayrak 'u' ICU'da (Android) geçersiz: (?iu)(?:tatlı|dessert) — uygulama açılışta çöker.\n  - LiveSubtitleQuality10425.kt:29  gömülü bayrak 'u' ICU'da (Android) geçersiz: (?iu)(?:temkin|tedbir|ihtiyat|dikkatli|sakın|içine kapanık) — uygulama açılışta çöker.\n  - LiveSubtitleQuality10425.kt:33  gömülü bayrak 'u' ICU'da (Android) geçersiz: (?iu)(?:ödeme|ücret|paramız|para(?:mız)?|alacağımız) — uygulama açılışta çöker.\n  - MeaningSafety.kt:21  gömülü bayrak 'u' ICU'da (Android) geçersiz: (?iu)^(?:hiç\\s+)?(?:kimseyi|birini|onları|hepsini)\\s+(?:(?:sağ|canlı)\\ — uygulama açılışta çöker.\n  - MeaningSafety.kt:29  gömülü bayrak 'u' ICU'da (Android) geçersiz: (?iu)\\b[\\p{L}]+m[ae]k\\s*[!.]*$ — uygulama açılışta çöker.\n  - MeaningSafety.kt:35  gömülü bayrak 'u' ICU'da (Android) geçersiz: (?iu)(?:\\b(?:sakın|asla|hiçbir|değil|yok|hayır)\\b|\\b[\\p{L}]+(?:ma|me)( — uygulama açılışta çöker.\n  - TranslationQualityGate.kt:21  gömülü bayrak 'u' ICU'da (Android) geçersiz: (?iu)(?:sik|siktir|sikti|sikik|amına|bok|piç|orospu|yavşak|kaltak|göt| — uygulama açılışta çöker.\n  - TranslationQualityGate.kt:24  gömülü bayrak 'u' ICU'da (Android) geçersiz: (?iu)\\byedeklen(?:di|miş|iyor|ecek)\\b — uygulama açılışta çöker.\n  - TranslationQualityGate.kt:26  gömülü bayrak 'u' ICU'da (Android) geçersiz: (?iu)\\bdışarı\\s+çık(?:tım|tı|tık|tılar|tın)\\b — uygulama açılışta çöker.\n  - TranslationQualityGate.kt:28  gömülü bayrak 'u' ICU'da (Android) geçersiz: (?iu)(?<![\\p{L}])(?:sırtını|belini)\\s+(?:işten\\s+)?attı(?![\\p{L}]) — uygulama açılışta çöker.\n"
+    },
+    {
+      "test": "test_cift_kayit.py",
+      "state": "PASS",
+      "seconds": 1.0,
+      "code": 0,
+      "detail": "Çift kayıt testi geçti: 5 harita ve 621 sözlük anahtarında çakışma yok.\n"
+    },
+    {
+      "test": "test_sablon.py",
+      "state": "PASS",
+      "seconds": 1.08,
+      "code": 0,
+      "detail": "Şablon testi geçti [ICU (Android'in motoru)]: 350 çalışma anı kalıbı derlendi, listelerde kaçışsız metakarakter yok.\n"
+    },
+    {
+      "test": "test_dayanik.py",
+      "state": "PASS",
+      "seconds": 3.87,
+      "code": 0,
+      "detail": "denetlenen kalip: 411, genel girdi: 53 + kaliba ozel 4\n  COKME riski (bos eslesme + lambda): 0 | yavas/kilitli: 0 | derlenmeyen: 0 | zararsiz sifir-genislik kalip: 2\nDayaniklilik testi gecti: lambda ile kullanilan hicbir kalip bos eslesmiyor, saldirgan girdide kilitlenme yok.\n  NOT: zamanlama olcumu, teorik felaket geri izlemenin YOKLUGUNU kanitlamaz; gercek kaliplarin gercekci uzun girdide yavaslamadigini gosterir.\nPicked up JAVA_TOOL_OPTIONS:\n"
+    },
+    {
+      "test": "test_tarama.py",
+      "state": "PASS",
+      "seconds": 3.61,
+      "code": 0,
+      "detail": "  izinli ikileme: 38\n  taranan: 1016 satır (174 tanesi taslak katmanında çözüldü)\n  NOT: bulgu sayısı 0, bilinen sınır 1 — sınır düşürülebilir.\nÇıktı taraması geçti: 174 çözülen satırda 0 bulgu (sınır 1); İngilizce sızması, yer tutucu kaçağı, dengesiz parantez yok.\n"
+    },
+    {
+      "test": "test_yalniz_dogru.py",
+      "state": "FAIL",
+      "seconds": 0.96,
+      "code": 1,
+      "detail": "BAŞARISIZ:\n  - Kayıt başlığı modu yazmıyor; kayıttan hangi modda çekildiği anlaşılmaz.\n"
+    },
+    {
+      "test": "test_dusunme.py",
+      "state": "FAIL",
+      "seconds": 0.88,
+      "code": 1,
+      "detail": "BAŞARISIZ:\n  - İnternet modunda eski bozuk taslaklar hafızadan basılıyor, yapay zekâya gidilmiyor.\n"
+    },
+    {
+      "test": "test_bicim.py",
+      "state": "FAIL",
+      "seconds": 0.99,
+      "code": 1,
+      "detail": "BAŞARISIZ:\n  - Eksik: hızlı biçim okunmuyor\n"
+    },
+    {
+      "test": "test_konusan.py",
+      "state": "PASS",
+      "seconds": 1.09,
+      "code": 0,
+      "detail": "Konuşan adı testi geçti: 'Man in Black', 'Soul' öğrenildi; 1144 korpus satırında 49 gerçek konuşan adı tanındı, yanlış alarm yok.\n"
+    },
+    {
+      "test": "test_etiket_onar.py",
+      "state": "PASS",
+      "seconds": 1.12,
+      "code": 0,
+      "detail": "Etiket onarımı testi geçti (ICU): 12 örnek doğru; 128 gerçek satırın 0'inde açık etiket kapatıldı, düzgün satırlara dokunulmadı.\n"
+    },
+    {
+      "test": "test_firefox.py",
+      "state": "PASS",
+      "seconds": 1.19,
+      "code": 0,
+      "detail": "Firefox motoru testi geçti: arayüz yayıncıyla aynı, görünürlük ve AIDL açık, yedek düşüş var.\n"
+    },
+    {
+      "test": "test_google.py",
+      "state": "FAIL",
+      "seconds": 0.94,
+      "code": 1,
+      "detail": "BAŞARISIZ:\n  - Google güçlü motor veya DeepL/OPUS yedeği olarak bağlanmıyor\n"
+    },
+    {
+      "test": "test_hafiza_budama.py",
+      "state": "PASS",
+      "seconds": 0.92,
+      "code": 0,
+      "detail": "Hafıza budama testi geçti: 120 günde 6000 replik, kalan 4520 (sınır 5000); her gün geçen 20 replik korundu, en eskiler silindi.\n"
+    },
+    {
+      "test": "test_deyim_google.py",
+      "state": "PASS",
+      "seconds": 1.05,
+      "code": 0,
+      "detail": "Ham-Google ve yedek-motor testi geçti (ICU): 7 örnek; 'stud', 'back in the day', 'take in the view' sadeleşiyor, benzer ama farklı cümlelere dokunulmuyor.\n"
+    },
+    {
+      "test": "test_context_guard_1019.py",
+      "state": "PASS",
+      "seconds": 1.06,
+      "code": 0,
+      "detail": "OK çok cümle tek Google çağrısı\nOK tek cümle davranışı\nOK kalıp önceliği\nOK Google -> Firefox fallback\nOK Google ham metin korunur\nOK OCR denetimi kullanılıyor\nOK OCR dar onarımlar kullanılıyor\nOK tanı ham Google yanıtı\nOK hafıza sürümü\n"
+    },
+    {
+      "test": "kotlin_denetle.py",
+      "state": "FAIL",
+      "seconds": 1.44,
+      "code": 1,
+      "detail": "Olası tanımsız parametreler:\n  ✗ CaptureService.kt → tanımlı olmayan fonksiyon çağrısı: listOfNotNull()\n  ✗ EngineBenchmark1035.kt → fun persist() içinde tanımsız olabilir: context\n  ✗ EngineBenchmark1035.kt → fun progress() içinde tanımsız olabilir: onProgress\n  ✗ EngineBenchmark1035.kt → tanımlı olmayan fonksiyon çağrısı: appendLine()\n  ✗ OpusSentencePiece.kt → fun skip() içinde tanımsız olabilir: bytes\n  ✗ OpusSentencePiece.kt → tanımlı olmayan fonksiyon çağrısı: shl()\n"
+    },
+    {
+      "test": "kotlin_cagri.py",
+      "state": "PASS",
+      "seconds": 1.12,
+      "code": 0,
+      "detail": "Dosyalar arası çağrı denetimi temiz (99 tip, 2806 üye, 0 üst düzey fonksiyon).\n"
+    },
+    {
+      "test": "kaynak_denetle.py",
+      "state": "PASS",
+      "seconds": 1.08,
+      "code": 0,
+      "detail": "Kaynak denetimi temiz (37 XML, 8 stil, 18 renk, 28 cizim).\n"
+    }
+  ]
+}

@@ -1,0 +1,51 @@
+package com.example.altyazi
+
+fun main() {
+    // Açıkça yarım kalmış cümle ve virgüllü devamlar birleştirilir.
+    val c = DialogueContextRepair()
+    c.remember("The kid has enough to deal with", 10_000)
+    c.remember("without me messing him up the way I did Mark.", 11_000)
+    check(c.joinedTranslationInput("without me messing him up the way I did Mark.", 11_500) ==
+        "The kid has enough to deal with without me messing him up the way I did Mark.")
+    c.reset()
+    c.remember("Maybe a little ordinary,", 10_000)
+    c.remember("but I figure that's what she needs after you.", 11_000)
+    check(c.joinedTranslationInput("but I figure that's what she needs after you.", 11_500) ==
+        "Maybe a little ordinary, but I figure that's what she needs after you.")
+    c.reset()
+    c.remember("to see if you could", 10_000)
+    c.remember("breed with us?", 11_000)
+    check(c.joinedTranslationInput("breed with us?", 11_500) == "to see if you could breed with us?")
+    // Değişik sahne / farklı kişi / tamamlanmış cümle / şarkı sözü korunur.
+    c.reset()
+    c.remember("They grow up fast, don't they?", 10_000)
+    c.remember("him in particular.", 11_000)
+    check(c.joinedTranslationInput("him in particular.", 11_500) == null)
+    c.reset()
+    c.remember("I said I would be there,", 10_000)
+    c.remember("[Debbie] but you weren't.", 11_000)
+    check(c.joinedTranslationInput("[Debbie] but you weren't.", 11_500) == null)
+    c.reset()
+    c.remember("I'm walking in the rain", 10_000)
+    c.remember("with a smile on my face.", 11_000)
+    check(c.joinedTranslationInput("with a smile on my face.", 20_000) == null)
+    c.reset()
+    c.remember("The room feels so cold", 10_000)
+    c.remember("and I know why.", 11_000)
+    check(c.joinedTranslationInput("and I know why.", 11_500) == null)
+    c.reset()
+    c.remember("Wait, don't go yet.", 10_000)
+    c.remember("please stay here.", 11_000)
+    check(c.joinedTranslationInput("please stay here.", 11_500) == null)
+    c.reset()
+    c.remember("I can explain everything to you,", 10_000)
+    c.remember("but not in front of everyone.", 11_000)
+    check(c.joinedTranslationInput("but not in front of everyone.", 11_500) != null)
+    c.reset()
+    check(c.joinedTranslationInput("but not in front of everyone.", 11_500) == null)
+    // Aynı ses kaynağı olarak kaldığı için önceki 10.21 sabit onarımları da bozulmamalı.
+    c.remember("Have we been", 10_000)
+    c.remember("here before?", 11_000)
+    check(c.contextualTranslation("here before?") == "Daha önce buraya gelmiş miydik?")
+    println("OK 10.22: bounded sentence joining, time safety, speaker safety, regression")
+}

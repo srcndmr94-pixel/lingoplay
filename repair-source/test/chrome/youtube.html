@@ -1,0 +1,13 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+body{margin:0;background:#111} #movie_player{position:relative;width:1280px;height:720px;background:#222;overflow:hidden}
+.caption-window{position:absolute;left:50%;transform:translateX(-50%);bottom:70px;background:rgba(8,8,8,.75);padding:2px 8px}
+.ytp-caption-segment{color:#fff;font:28px Arial}
+</style></head><body>
+<div id="movie_player" class="html5-video-player"><video></video></div>
+<script>
+function altyazi(metin, alt){ document.querySelectorAll('.caption-window').forEach(e=>e.remove()); if(!metin) return;
+  const w=document.createElement('div'); w.className='caption-window'; if(alt!==undefined) w.style.bottom=alt+'px';
+  for(const satir of metin.split('\n')){ const l=document.createElement('span'); l.className='caption-visual-line'; l.style.display='block';
+    for(const kelime of satir.split(' ')){ const s=document.createElement('span'); s.className='ytp-caption-segment'; s.textContent=kelime+' '; l.appendChild(s);} w.appendChild(l);}
+  document.getElementById('movie_player').appendChild(w); }
+</script></body></html>

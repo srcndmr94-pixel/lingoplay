@@ -1,0 +1,30 @@
+#gl-ceviri {
+  position: absolute;
+  z-index: 2147483000;
+  left: 50%;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: 88%;
+  box-sizing: border-box;
+  padding: 0.25em 0.6em 0.3em;
+  border-radius: 6px;
+  background: #000;
+  color: #fff;
+  font: 600 22px/1.3 "Segoe UI", Roboto, Arial, sans-serif;
+  text-align: center;
+  white-space: pre-wrap;
+  pointer-events: none;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
+  display: none;
+}
+#gl-ceviri.gl-gorunur { display: block; }
+#gl-ceviri.gl-sabit { position: fixed; }
+#gl-ceviri.gl-dugme {
+  pointer-events: auto;
+  cursor: pointer;
+  background: #0e2a47;
+  color: #3ddc84;
+  border: 2px solid #3ddc84;
+}
+#gl-ceviri.gl-bilgi { color: #9fb3c8; font-size: 15px; }
+.gl-ingilizce-gizli { visibility: hidden !important; }

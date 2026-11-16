@@ -1,0 +1,23 @@
+GameLingo Tarayıcı — Chrome eklentisi kurulumu (bir kez)
+
+1) Bu zip'i bilgisayarda bir klasöre çıkarın (sağ tık > Tümünü ayıkla).
+   Klasörü silmeyin; Chrome eklentiyi oradan çalıştırır.
+2) Chrome adres çubuğuna yazın:  chrome://extensions
+3) Sağ üstteki "Geliştirici modu" anahtarını açın.
+4) "Paketlenmemiş öğe yükle" düğmesine basın ve çıkardığınız
+   GameLingo-Chrome klasörünü seçin.
+5) Sağ üstteki yapboz simgesinden GameLingo'yu sabitleyin (isteğe bağlı).
+6) GameLingo simgesine tıklayın > "Türkçe çeviri modelini hazırla" (bir kez indirir).
+
+Kullanım: YouTube'da altyazıyı (CC) açın; Netflix / Prime Video'da İngilizce altyazıyı seçin.
+Türkçe çeviri İngilizce altyazının hemen altında çıkar.
+Simgeden: çeviriyi aç/kapat, İngilizceyi gizle, yazı boyutu.
+
+Gerekenler: Chrome 138 veya daha yenisi (Ayarlar > Chrome hakkında ile güncelleyin).
+
+Oyun çevirisi (GameLingo PC programı 5.14 ve üstü):
+PC programında çeviri kartından "Chrome çevirisi"ni seçin. Oyun oynarken Chrome açık kalsın
+(küçültülmüş olabilir). Eklenti oyundan okunan satırları Chrome'un çeviri modeliyle çevirir.
+
+Eklentiyi güncellemek: yeni zip'i aynı klasöre (C:\GameLingo-Chrome) çıkarıp eskilerinin üzerine yazın,
+sonra chrome://extensions sayfasında GameLingo kartındaki yenile (↻) düğmesine basın.

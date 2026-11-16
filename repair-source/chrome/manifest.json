@@ -1,0 +1,45 @@
+{
+  "manifest_version": 3,
+  "name": "GameLingo Tarayıcı",
+  "version": "1.1",
+  "description": "YouTube, Netflix ve Prime Video altyazılarını anında Türkçeye çevirir; GameLingo PC programına oyun çevirisi sağlar.",
+  "icons": {
+    "16": "simgeler/16.png",
+    "32": "simgeler/32.png",
+    "48": "simgeler/48.png",
+    "128": "simgeler/128.png"
+  },
+  "permissions": [
+    "storage",
+    "offscreen",
+    "alarms"
+  ],
+  "action": {
+    "default_title": "GameLingo Tarayıcı",
+    "default_popup": "acilir.html",
+    "default_icon": {
+      "16": "simgeler/16.png",
+      "32": "simgeler/32.png"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "icerik.js"
+      ],
+      "css": [
+        "stil.css"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "host_permissions": [
+    "http://127.0.0.1:47330/*"
+  ],
+  "background": {
+    "service_worker": "arka.js"
+  }
+}

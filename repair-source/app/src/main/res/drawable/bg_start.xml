@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Çeviriyi başlat düğmesi: dışta hafif parlama, içte turkuaz çerçeveli koyu yüzey -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_pressed="true">
+        <layer-list>
+            <item><shape android:shape="rectangle"><solid android:color="@color/lingo_glow" /><corners android:radius="22dp" /></shape></item>
+            <item android:top="4dp" android:bottom="4dp" android:left="4dp" android:right="4dp">
+                <shape android:shape="rectangle"><solid android:color="#14506A" /><stroke android:width="2dp" android:color="@color/lingo_primary" /><corners android:radius="18dp" /></shape></item>
+        </layer-list>
+    </item>
+    <item>
+        <layer-list>
+            <item><shape android:shape="rectangle"><solid android:color="@color/lingo_glow" /><corners android:radius="22dp" /></shape></item>
+            <item android:top="4dp" android:bottom="4dp" android:left="4dp" android:right="4dp">
+                <shape android:shape="rectangle"><solid android:color="@color/lingo_primary_container" /><stroke android:width="2dp" android:color="@color/lingo_primary" /><corners android:radius="18dp" /></shape></item>
+        </layer-list>
+    </item>
+</selector>

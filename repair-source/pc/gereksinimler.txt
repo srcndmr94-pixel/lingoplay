@@ -1,0 +1,6 @@
+pyinstaller
+mss
+numpy
+rapidocr-onnxruntime
+ctranslate2
+sentencepiece

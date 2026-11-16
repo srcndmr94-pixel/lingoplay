@@ -1,0 +1,6 @@
+BENCH202|id=12|stage=ENGINE|engine=DeepL|ms=312|since=400|accepted=yes|reason=ok|source=No. Y'all know Boobie?|context=We got here.|output=Hayır. Boobie'i tanıyor musunuz?
+BENCH202|id=12|stage=DISPLAY_ACCEPTED|ms=406|tag=|source=No. Y'all know Boobie?|output=Hayır. Boobie'i tanıyor musunuz?
+BENCH202|id=13|stage=ENGINE|engine=MLKit-local|ms=55|since=488|accepted=yes|reason=ok|source=Y'all tryna smoke?|context=No.|output=Hepiniz sigara deneyin?
+BENCH202|id=13|stage=DISPLAY_ACCEPTED|ms=500|tag=hızlı yerel yedek|source=Y'all tryna smoke?|output=Hepiniz sigara deneyin?
+BENCH202|id=13|stage=ENGINE|engine=DeepL|ms=668|since=713|accepted=yes|reason=ok|source=Y'all tryna smoke?|context=No.|output=Sigara içmek isteyen var mı?
+BENCH202|id=13|stage=LOCKED|tag=|source=Y'all tryna smoke?|output=Sigara içmek isteyen var mı?

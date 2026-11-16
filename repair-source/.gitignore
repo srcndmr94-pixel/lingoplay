@@ -1,0 +1,7 @@
+# Signing keys: never upload to public git or pack into sources.
+*.keystore
+*.jks
+keystore.properties
+local.properties
+**/build/
+.gradle/

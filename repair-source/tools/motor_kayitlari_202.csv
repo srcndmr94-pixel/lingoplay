@@ -1,0 +1,7 @@
+﻿id,stage,engine,ms,since,accepted,reason,source,context,output,tag
+12,ENGINE,DeepL,312,400,yes,ok,No. Y'all know Boobie?,We got here.,Hayır. Boobie'i tanıyor musunuz?,
+12,DISPLAY_ACCEPTED,,406,,,,No. Y'all know Boobie?,,Hayır. Boobie'i tanıyor musunuz?,
+13,ENGINE,MLKit-local,55,488,yes,ok,Y'all tryna smoke?,No.,Hepiniz sigara deneyin?,
+13,DISPLAY_ACCEPTED,,500,,,,Y'all tryna smoke?,,Hepiniz sigara deneyin?,hızlı yerel yedek
+13,ENGINE,DeepL,668,713,yes,ok,Y'all tryna smoke?,No.,Sigara içmek isteyen var mı?,
+13,LOCKED,,,,,,Y'all tryna smoke?,,Sigara içmek isteyen var mı?,

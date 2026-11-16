@@ -1,0 +1,10 @@
+{
+  "app/src/main/java/com/example/altyazi/RealtimeCaptionPolicy199.kt": "b8a66ff9cae27bf6f4786cf3039009cedf1f14fd6a40cc28f2f710aceed0ea11",
+  "app/src/main/java/com/example/altyazi/DeepLCeviri.kt": "280775da7bcad29c5f3520bf7e90ac5b19b2c5b9767415e7b7a3f7d02f0fb84b",
+  "app/src/main/java/com/example/altyazi/AiTranslate.kt": "14dcf3bd0a06888664116b303be32a7734d320db8b6bdf41b291e3c3c117dffa",
+  "app/src/main/java/com/example/altyazi/NaturalTranslationPolicy10427.kt": "a00324f6add427d3122bed0e5775299e4bf0745353b6a5069425089bb58c43ab",
+  "app/src/main/java/com/example/altyazi/TranslationQualityGate.kt": "fab879838070eda885902a5880cea3cc2e5d4ee7d1c620c96ea0cc91014834f5",
+  "app/src/main/java/com/example/altyazi/TranslationCachePolicy10427.kt": "ae9280c40beeb5801cc825a183f47c916e35e0fe5d20fde40b67640cdb09869f",
+  "app/src/main/java/com/example/altyazi/DialogueContextRepair.kt": "73da98847b6be781f7642c028e11cd5cbcd3b63f641a478c20392c1d57e72797",
+  "app/src/main/java/com/example/altyazi/CaptureService.kt": "cc9b1728b00bd012127a00899db9dd1491ed3c0681a1da4659e2ef3854d33f4c"
+}

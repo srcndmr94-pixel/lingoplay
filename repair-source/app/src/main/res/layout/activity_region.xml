@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#111829"
+    android:orientation="vertical">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp"
+        android:paddingTop="18dp"
+        android:paddingBottom="10dp"
+        android:text="Altyazı bölgesi"
+        android:textColor="#FFFFFF"
+        android:textSize="19sp"
+        android:textStyle="bold" />
+
+    <FrameLayout
+        android:id="@+id/regionPreviewArea"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:padding="12dp">
+
+        <FrameLayout
+            android:id="@+id/regionPreviewFrame"
+            android:layout_width="match_parent"
+            android:layout_height="250dp"
+            android:layout_gravity="center"
+            android:background="@drawable/bg_region_preview"
+            android:clipToOutline="true">
+
+            <com.example.altyazi.RegionView
+                android:id="@+id/regionView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+
+            <TextView
+                android:id="@+id/tvRegionPreviewHint"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="top"
+                android:gravity="center"
+                android:padding="16dp"
+                android:text="Çeviri açıkken burada son oyun görüntüsü görünür."
+                android:textColor="#9397A4"
+                android:textSize="13sp" />
+        </FrameLayout>
+    </FrameLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_region_panel"
+        android:orientation="vertical"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingTop="18dp"
+        android:paddingBottom="16dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:background="@drawable/bg_region_segment"
+            android:orientation="horizontal"
+            android:padding="4dp">
+
+            <TextView
+                android:id="@+id/btnEdgeTop"
+                style="@style/RegionEdgeButton"
+                android:text="Üst" />
+            <TextView
+                android:id="@+id/btnEdgeBottom"
+                style="@style/RegionEdgeButton"
+                android:text="Alt" />
+            <TextView
+                android:id="@+id/btnEdgeLeft"
+                style="@style/RegionEdgeButton"
+                android:text="Sol" />
+            <TextView
+                android:id="@+id/btnEdgeRight"
+                style="@style/RegionEdgeButton"
+                android:text="Sağ" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+            <SeekBar
+                android:id="@+id/sbRegionEdge"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:max="100"
+                android:progressTint="#168FFF"
+                android:thumbTint="#FFFFFF" />
+            <TextView
+                android:id="@+id/tvRegionPercent"
+                android:layout_width="68dp"
+                android:layout_height="wrap_content"
+                android:gravity="end"
+                android:text="%74"
+                android:textColor="#D2D4DF"
+                android:textSize="23sp" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tvOlcu"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:gravity="center"
+            android:textColor="#B7BCCC"
+            android:textSize="12sp" />
+
+        <TextView
+            android:id="@+id/btnRegionDefault"
+            android:layout_width="match_parent"
+            android:layout_height="46dp"
+            android:layout_marginTop="8dp"
+            android:gravity="center_vertical"
+            android:text="Varsayılana Dön"
+            android:textColor="#168FFF"
+            android:textSize="16sp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:orientation="horizontal">
+            <Button
+                android:id="@+id/btnRegionCancel"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1"
+                android:backgroundTint="#333A4B"
+                android:text="Vazgeç"
+                android:textAllCaps="false"
+                android:textColor="#FFFFFF" />
+            <Button
+                android:id="@+id/btnRegionSave"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_marginStart="12dp"
+                android:layout_weight="1"
+                android:backgroundTint="#087FDD"
+                android:text="Kaydet"
+                android:textAllCaps="false"
+                android:textColor="#FFFFFF" />
+        </LinearLayout>
+    </LinearLayout>
+</LinearLayout>

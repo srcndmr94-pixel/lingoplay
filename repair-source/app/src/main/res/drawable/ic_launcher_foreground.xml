@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  GameLingo simgesi: oyun kumandası + "TR" konuşma balonu (kendi çizimimiz).
+  Uyarlanabilir simgenin güvenli alanına sığsın diye ortadan %66 küçültüldü.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <group
+        android:pivotX="54"
+        android:pivotY="54"
+        android:scaleX="0.66"
+        android:scaleY="0.66">
+
+        <!-- Kumanda gövdesi (çerçeve) -->
+        <path
+            android:pathData="M30,42h48a14,14 0 0,1 14,14v6a14,14 0 0,1 -24,10l-4,-4H44l-4,4a14,14 0 0,1 -24,-10v-6a14,14 0 0,1 14,-14z"
+            android:strokeColor="#2EE6D6"
+            android:strokeLineJoin="round"
+            android:strokeWidth="4" />
+
+        <!-- Yön tuşu ve iki düğme -->
+        <path android:fillColor="#2EE6D6" android:pathData="M31,53h12v4H31zM35,49h4v12h-4z" />
+        <path android:fillColor="#2EE6D6" android:pathData="M70,55m-3,0a3,3 0 1,0 6,0a3,3 0 1,0 -6,0" />
+        <path android:fillColor="#2EE6D6" android:pathData="M77,59m-3,0a3,3 0 1,0 6,0a3,3 0 1,0 -6,0" />
+
+        <!-- Konuşma balonu ve TR -->
+        <path android:fillColor="#2EA8FF" android:pathData="M62,22h24a6,6 0 0,1 6,6v10a6,6 0 0,1 -6,6h-14l-6,6v-6h-4a6,6 0 0,1 -6,-6V28a6,6 0 0,1 6,-6z" />
+        <path
+            android:pathData="M65,29h8M69,29v9M76,38v-9h3.6a2.6,2.6 0 0,1 0,5.2h-3.6M79.2,34.2l3,3.8"
+            android:strokeColor="#0B1220"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round"
+            android:strokeWidth="2.4" />
+    </group>
+</vector>

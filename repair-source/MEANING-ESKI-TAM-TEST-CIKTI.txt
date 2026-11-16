@@ -1,0 +1,71 @@
+RUNNING 61 legacy scripts
+PASS test_512.py 4.58s
+PASS test_ad_eki.py 1.08s
+PASS test_arayuz.py 3.09s
+PASS test_bitisik.py 1.05s
+PASS test_bozuk.py 1.09s
+PASS test_dongu.py 4.77s
+PASS test_ekran.py 0.92s
+PASS test_filtre.py 1.05s
+PASS test_harf.py 1.02s
+PASS test_hata.py 2.28s
+PASS test_hata_eslesme.py 1.12s
+PASS test_hata_kaydi.py 0.89s
+PASS test_hiz.py 5.88s
+PASS test_isim_hud.py 1.08s
+PASS test_metin.py 0.94s
+PASS test_model_alani.py 1.05s
+PASS test_pc.py 2.59s
+PASS test_pc_ocr.py 1.02s
+PASS test_ses_etiketi.py 1.0s
+PASS test_sozluk.py 0.98s
+PASS test_taslak_akisi.py 3.09s
+PASS test_telefon_kopru.py 1.26s
+PASS test_turkce.py 0.96s
+PASS test_yerel_ceviri.py 7.3s
+PASS test_winocr.py 1.11s
+FAIL test_denetleyici.py 5.64s
+PASS test_cagri_denetimi.py 5.26s
+PASS test_argo.py 1.08s
+PASS test_cop_okuma.py 1.03s
+FAIL test_yigin.py 1.02s
+PASS test_yz_denetim.py 0.98s
+PASS test_yz_tetik.py 1.02s
+PASS test_bosluk_taramasi.py 0.95s
+PASS test_yol_kapsamasi.py 0.9s
+PASS test_tezgah.py 5.63s
+PASS test_katman.py 0.86s
+PASS test_talimat.py 1.01s
+PASS test_kurtarma.py 0.88s
+PASS test_etiket_sirasi.py 0.89s
+PASS test_kutup.py 1.04s
+PASS test_kalip.py 2.5s
+PASS test_kufur_siniri.py 1.07s
+PASS test_ayna.py 0.96s
+FAIL test_unicode.py 1.29s
+PASS test_cift_kayit.py 1.27s
+PASS test_sablon.py 1.17s
+PASS test_dayanik.py 4.58s
+PASS test_tarama.py 4.7s
+FAIL test_yalniz_dogru.py 1.13s
+FAIL test_dusunme.py 2.0s
+FAIL test_bicim.py 0.99s
+PASS test_konusan.py 1.05s
+PASS test_etiket_onar.py 0.99s
+PASS test_firefox.py 0.92s
+FAIL test_google.py 0.94s
+PASS test_hafiza_budama.py 0.98s
+PASS test_deyim_google.py 0.86s
+PASS test_context_guard_1019.py 1.02s
+FAIL kotlin_denetle.py 1.36s
+PASS kotlin_cagri.py 1.08s
+PASS kaynak_denetle.py 0.93s
+COMPLETE {'PASS': 53, 'FAIL': 8, 'TIMEOUT': 0}
+ISSUE test_denetleyici.py a bunun arasında kaybolur): ✗ EngineBenchmark1035.kt → tanımlı olmayan fonksiyon çağrısı: appendLine()   ✗ yanlış alarm (gerçek hata bunun arasında kaybolur): ✗ OpusSentencePiece.kt → fun skip() içinde tanımsız olabilir: bytes   ✗ yanlış alarm (gerçek hata bunun arasında kaybolur): ✗ OpusSentencePiece.kt → tanımlı olmayan fonksiyon çağrısı: shl()  
+ISSUE test_yigin.py Yığın testi DÜŞTÜ:   ✗ üst sıra setSubtitle'a bağlanmamış  
+ISSUE test_unicode.py me)( — uygulama açılışta çöker.   - TranslationQualityGate.kt:25  gömülü bayrak 'u' ICU'da (Android) geçersiz: (?iu)\byedeklen(?:di|miş|iyor|ecek)\b — uygulama açılışta çöker.   - TranslationQualityGate.kt:29  gömülü bayrak 'u' ICU'da (Android) geçersiz: (?iu)(?<![\p{L}])(?:sırtını|belini)\s+(?:işten\s+)?attı(?![\p{L}]) — uygulama açılışta çöker.  
+ISSUE test_yalniz_dogru.py BAŞARISIZ:   - Kayıt başlığı modu yazmıyor; kayıttan hangi modda çekildiği anlaşılmaz.  
+ISSUE test_dusunme.py BAŞARISIZ:   - İnternet modunda eski bozuk taslaklar hafızadan basılıyor, yapay zekâya gidilmiyor.  
+ISSUE test_bicim.py BAŞARISIZ:   - Eksik: hızlı biçim okunmuyor  
+ISSUE test_google.py BAŞARISIZ:   - Google güçlü motor veya DeepL/OPUS yedeği olarak bağlanmıyor  
+ISSUE kotlin_denetle.py kt → fun persist() içinde tanımsız olabilir: context   ✗ EngineBenchmark1035.kt → fun progress() içinde tanımsız olabilir: onProgress   ✗ EngineBenchmark1035.kt → tanımlı olmayan fonksiyon çağrısı: appendLine()   ✗ OpusSentencePiece.kt → fun skip() içinde tanımsız olabilir: bytes   ✗ OpusSentencePiece.kt → tanımlı olmayan fonksiyon çağrısı: shl()  

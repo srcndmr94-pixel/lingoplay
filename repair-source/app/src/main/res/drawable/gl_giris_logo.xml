@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Açılış animasyonu: kumanda çerçevesi çizilerek belirir, tuşlar yanar,
+  "TR" balonu yaylanarak çıkar ve harfleri yazılır. (Toplam ~1,2 sn)
+-->
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt">
+
+    <aapt:attr name="android:drawable">
+        <vector
+            android:width="108dp"
+            android:height="108dp"
+            android:viewportWidth="108"
+            android:viewportHeight="108">
+
+            <group
+                android:pivotX="54"
+                android:pivotY="54"
+                android:scaleX="0.9"
+                android:scaleY="0.9">
+
+                <path
+                    android:name="govde"
+                    android:pathData="M30,42h48a14,14 0 0,1 14,14v6a14,14 0 0,1 -24,10l-4,-4H44l-4,4a14,14 0 0,1 -24,-10v-6a14,14 0 0,1 14,-14z"
+                    android:strokeColor="#2EE6D6"
+                    android:strokeLineCap="round"
+                    android:strokeLineJoin="round"
+                    android:strokeWidth="4"
+                    android:trimPathEnd="0" />
+
+                <path
+                    android:name="tuslar"
+                    android:fillAlpha="0"
+                    android:fillColor="#2EE6D6"
+                    android:pathData="M31,53h12v4H31zM35,49h4v12h-4zM70,55m-3,0a3,3 0 1,0 6,0a3,3 0 1,0 -6,0M77,59m-3,0a3,3 0 1,0 6,0a3,3 0 1,0 -6,0" />
+
+                <group
+                    android:name="balon"
+                    android:pivotX="66"
+                    android:pivotY="48"
+                    android:scaleX="0"
+                    android:scaleY="0">
+
+                    <path
+                        android:fillColor="#2EA8FF"
+                        android:pathData="M62,22h24a6,6 0 0,1 6,6v10a6,6 0 0,1 -6,6h-14l-6,6v-6h-4a6,6 0 0,1 -6,-6V28a6,6 0 0,1 6,-6z" />
+
+                    <path
+                        android:name="tr"
+                        android:pathData="M65,29h8M69,29v9M76,38v-9h3.6a2.6,2.6 0 0,1 0,5.2h-3.6M79.2,34.2l3,3.8"
+                        android:strokeColor="#0B1220"
+                        android:strokeLineCap="round"
+                        android:strokeLineJoin="round"
+                        android:strokeWidth="2.4"
+                        android:trimPathEnd="0" />
+                </group>
+            </group>
+        </vector>
+    </aapt:attr>
+
+    <!-- 1) Kumanda çerçevesi çizilir -->
+    <target android:name="govde">
+        <aapt:attr name="android:animation">
+            <objectAnimator
+                android:duration="700"
+                android:interpolator="@android:interpolator/fast_out_slow_in"
+                android:propertyName="trimPathEnd"
+                android:valueFrom="0"
+                android:valueTo="1"
+                android:valueType="floatType" />
+        </aapt:attr>
+    </target>
+
+    <!-- 2) Yön tuşu ve düğmeler yanar -->
+    <target android:name="tuslar">
+        <aapt:attr name="android:animation">
+            <objectAnimator
+                android:duration="250"
+                android:propertyName="fillAlpha"
+                android:startOffset="500"
+                android:valueFrom="0"
+                android:valueTo="1"
+                android:valueType="floatType" />
+        </aapt:attr>
+    </target>
+
+    <!-- 3) TR balonu yaylanarak çıkar -->
+    <target android:name="balon">
+        <aapt:attr name="android:animation">
+            <set>
+                <objectAnimator
+                    android:duration="380"
+                    android:interpolator="@android:interpolator/overshoot"
+                    android:propertyName="scaleX"
+                    android:startOffset="650"
+                    android:valueFrom="0"
+                    android:valueTo="1"
+                    android:valueType="floatType" />
+                <objectAnimator
+                    android:duration="380"
+                    android:interpolator="@android:interpolator/overshoot"
+                    android:propertyName="scaleY"
+                    android:startOffset="650"
+                    android:valueFrom="0"
+                    android:valueTo="1"
+                    android:valueType="floatType" />
+            </set>
+        </aapt:attr>
+    </target>
+
+    <!-- 4) "TR" harfleri yazılır -->
+    <target android:name="tr">
+        <aapt:attr name="android:animation">
+            <objectAnimator
+                android:duration="300"
+                android:propertyName="trimPathEnd"
+                android:startOffset="950"
+                android:valueFrom="0"
+                android:valueTo="1"
+                android:valueType="floatType" />
+        </aapt:attr>
+    </target>
+</animated-vector>
