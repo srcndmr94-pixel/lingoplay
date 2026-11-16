@@ -1,0 +1,23 @@
+name: Prepare repair source
+on:
+  push:
+    branches: [codex/subtitle-quality-repair]
+    paths: [.github/workflows/repair-source.yml]
+permissions:
+  contents: write
+jobs:
+  extract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Extract verified source on repair branch
+        run: |
+          set -eu
+          printf '%s  %s\n' bec8022cf8286eee1db3120b870d944786a8436d74da3c551b8eedaefaa02be1 GameLingo204_Kaynak.zip | sha256sum -c -
+          mkdir -p repair-source
+          unzip -q GameLingo204_Kaynak.zip -d repair-source
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add repair-source
+          git commit -m "Extract verified 204 source for subtitle repair review"
+          git push origin HEAD:codex/subtitle-quality-repair
