@@ -5,8 +5,8 @@ on:
   workflow_dispatch:
 
 env:
-  SOURCE_ZIP: GameLingo202_Benchmark_YanYana.zip
-  SOURCE_SHA256: 559eee398b22329cf86276ae5f426a1de7b4a009097d3bf4abd8ba227e057a53
+  SOURCE_ZIP: GameLingo202_Derleme_Duzeltildi.zip
+  SOURCE_SHA256: 6e179028747f5ad62413d636519273fb2d27b0a89510f2069e88ab0208c7c9fd
 
 # Dört iş birbirinden bağımsız: biri hata verse diğerleri yine çıktı üretir.
 
@@ -26,7 +26,7 @@ jobs:
           set -e
           echo "Beklenen 202 kaynagi: $SOURCE_ZIP"
           if [ ! -f "$SOURCE_ZIP" ]; then
-            echo "::error::GameLingo202_Benchmark_YanYana.zip bulunamadi. Dosyayi repo kokune yukleyin."
+            echo "::error::GameLingo202_Derleme_Duzeltildi.zip bulunamadi. Dosyayi repo kokune yukleyin."
             exit 1
           fi
           printf '%s  %s\n' "$SOURCE_SHA256" "$SOURCE_ZIP" | sha256sum -c -
@@ -88,7 +88,7 @@ jobs:
           set -e
           echo "Beklenen 202 kaynagi: $SOURCE_ZIP"
           if [ ! -f "$SOURCE_ZIP" ]; then
-            echo "::error::GameLingo202_Benchmark_YanYana.zip bulunamadi. Dosyayi repo kokune yukleyin."
+            echo "::error::GameLingo202_Derleme_Duzeltildi.zip bulunamadi. Dosyayi repo kokune yukleyin."
             exit 1
           fi
           printf '%s  %s\n' "$SOURCE_SHA256" "$SOURCE_ZIP" | sha256sum -c -
@@ -149,7 +149,7 @@ jobs:
           set -e
           echo "Beklenen 202 kaynagi: $SOURCE_ZIP"
           if [ ! -f "$SOURCE_ZIP" ]; then
-            echo "::error::GameLingo202_Benchmark_YanYana.zip bulunamadi. Dosyayi repo kokune yukleyin."
+            echo "::error::GameLingo202_Derleme_Duzeltildi.zip bulunamadi. Dosyayi repo kokune yukleyin."
             exit 1
           fi
           printf '%s  %s\n' "$SOURCE_SHA256" "$SOURCE_ZIP" | sha256sum -c -
@@ -230,7 +230,7 @@ jobs:
           set -e
           echo "Beklenen 202 kaynagi: $SOURCE_ZIP"
           if [ ! -f "$SOURCE_ZIP" ]; then
-            echo "::error::GameLingo202_Benchmark_YanYana.zip bulunamadi. Dosyayi repo kokune yukleyin."
+            echo "::error::GameLingo202_Derleme_Duzeltildi.zip bulunamadi. Dosyayi repo kokune yukleyin."
             exit 1
           fi
           printf '%s  %s\n' "$SOURCE_SHA256" "$SOURCE_ZIP" | sha256sum -c -
