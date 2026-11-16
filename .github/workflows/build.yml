@@ -4,6 +4,10 @@ on:
     branches: [main]
   workflow_dispatch:
 
+env:
+  SOURCE_ZIP: GameLingo201.zip
+  SOURCE_SHA256: 7f42aab7d173ffcc555bf9ade8d65f5bbaa744de6cd522376b19d38657ab8f17
+
 # Dört iş birbirinden bağımsız: biri hata verse diğerleri yine çıktı üretir.
 
 jobs:
@@ -20,14 +24,28 @@ jobs:
         shell: bash
         run: |
           set -e
-          ZIP=$(git log --name-only --pretty=format: -n 50 \
-                | grep -iE '\.zip$' | grep -iE 'lingoplay|altyazi' | head -n 1 || true)
-          if [ -z "$ZIP" ] || [ ! -f "$ZIP" ]; then
-            ZIP=$(ls -t *.zip 2>/dev/null | head -n 1)
+          echo "Beklenen 201 kaynagi: $SOURCE_ZIP"
+          if [ ! -f "$SOURCE_ZIP" ]; then
+            echo "::error::GameLingo201.zip bulunamadi. Dosyayi repo kokune yukleyin."
+            exit 1
           fi
-          echo "Kaynak: $ZIP"
+          printf '%s  %s\n' "$SOURCE_SHA256" "$SOURCE_ZIP" | sha256sum -c -
+          unzip -tq "$SOURCE_ZIP" >/dev/null
           rm -rf kaynak && mkdir kaynak
-          unzip -q "$ZIP" -d kaynak
+          unzip -q "$SOURCE_ZIP" -d kaynak
+          if [ ! -f kaynak/app/build.gradle.kts ]; then
+            echo "::error::ZIP icinde app/build.gradle.kts eksik"
+            exit 1
+          fi
+          grep -Eq '^[[:space:]]*versionCode[[:space:]]*=[[:space:]]*201[[:space:]]*$' kaynak/app/build.gradle.kts || {
+            echo "::error::Yanlis surum: versionCode 201 degil"
+            exit 1
+          }
+          grep -Eq '^[[:space:]]*versionName[[:space:]]*=[[:space:]]*"10[.]42[.]7-stable-quality-rc7"[[:space:]]*$' kaynak/app/build.gradle.kts || {
+            echo "::error::Yanlis surum adi: stable-quality-rc7 bekleniyor"
+            exit 1
+          }
+          echo "GameLingo kaynak surumu dogrulandi: 201 / 10.42.7-stable-quality-rc7"
           ls kaynak
 
       - uses: actions/setup-java@v5
@@ -64,14 +82,28 @@ jobs:
         shell: bash
         run: |
           set -e
-          ZIP=$(git log --name-only --pretty=format: -n 50 \
-                | grep -iE '\.zip$' | grep -iE 'lingoplay|altyazi' | head -n 1 || true)
-          if [ -z "$ZIP" ] || [ ! -f "$ZIP" ]; then
-            ZIP=$(ls -t *.zip 2>/dev/null | head -n 1)
+          echo "Beklenen 201 kaynagi: $SOURCE_ZIP"
+          if [ ! -f "$SOURCE_ZIP" ]; then
+            echo "::error::GameLingo201.zip bulunamadi. Dosyayi repo kokune yukleyin."
+            exit 1
           fi
-          echo "Kaynak: $ZIP"
+          printf '%s  %s\n' "$SOURCE_SHA256" "$SOURCE_ZIP" | sha256sum -c -
+          unzip -tq "$SOURCE_ZIP" >/dev/null
           rm -rf kaynak && mkdir kaynak
-          unzip -q "$ZIP" -d kaynak
+          unzip -q "$SOURCE_ZIP" -d kaynak
+          if [ ! -f kaynak/app/build.gradle.kts ]; then
+            echo "::error::ZIP icinde app/build.gradle.kts eksik"
+            exit 1
+          fi
+          grep -Eq '^[[:space:]]*versionCode[[:space:]]*=[[:space:]]*201[[:space:]]*$' kaynak/app/build.gradle.kts || {
+            echo "::error::Yanlis surum: versionCode 201 degil"
+            exit 1
+          }
+          grep -Eq '^[[:space:]]*versionName[[:space:]]*=[[:space:]]*"10[.]42[.]7-stable-quality-rc7"[[:space:]]*$' kaynak/app/build.gradle.kts || {
+            echo "::error::Yanlis surum adi: stable-quality-rc7 bekleniyor"
+            exit 1
+          }
+          echo "GameLingo kaynak surumu dogrulandi: 201 / 10.42.7-stable-quality-rc7"
           ls kaynak/tv
 
       - uses: actions/setup-java@v5
@@ -93,9 +125,8 @@ jobs:
           path: kaynak/tv/build/outputs/apk/debug/tv-debug.apk
           if-no-files-found: error
 
-  # ------------------------------------- PS5 oyun uygulaması (GameLingo PS5)
-  # chiaki-ng'nin (açık kaynak PS5 Remote Play) Android uygulamasını indirir,
-  # GameLingo yamasını uygular (altyazı okuma + çeviri) ve APK yapar.
+  # --------------------------------------------- PS5 APK (GameLingo PS5)
+  # Bu is, kaynak ZIP icinde ps5/yama.py varsa derlenebilir.
   ps5:
     name: PS5 APK
     runs-on: ubuntu-latest
@@ -108,14 +139,28 @@ jobs:
         shell: bash
         run: |
           set -e
-          ZIP=$(git log --name-only --pretty=format: -n 50 \
-                | grep -iE '\.zip$' | grep -iE 'lingoplay|altyazi' | head -n 1 || true)
-          if [ -z "$ZIP" ] || [ ! -f "$ZIP" ]; then
-            ZIP=$(ls -t *.zip 2>/dev/null | head -n 1)
+          echo "Beklenen 201 kaynagi: $SOURCE_ZIP"
+          if [ ! -f "$SOURCE_ZIP" ]; then
+            echo "::error::GameLingo201.zip bulunamadi. Dosyayi repo kokune yukleyin."
+            exit 1
           fi
-          echo "Kaynak: $ZIP"
+          printf '%s  %s\n' "$SOURCE_SHA256" "$SOURCE_ZIP" | sha256sum -c -
+          unzip -tq "$SOURCE_ZIP" >/dev/null
           rm -rf kaynak && mkdir kaynak
-          unzip -q "$ZIP" -d kaynak
+          unzip -q "$SOURCE_ZIP" -d kaynak
+          if [ ! -f kaynak/app/build.gradle.kts ]; then
+            echo "::error::ZIP icinde app/build.gradle.kts eksik"
+            exit 1
+          fi
+          grep -Eq '^[[:space:]]*versionCode[[:space:]]*=[[:space:]]*201[[:space:]]*$' kaynak/app/build.gradle.kts || {
+            echo "::error::Yanlis surum: versionCode 201 degil"
+            exit 1
+          }
+          grep -Eq '^[[:space:]]*versionName[[:space:]]*=[[:space:]]*"10[.]42[.]7-stable-quality-rc7"[[:space:]]*$' kaynak/app/build.gradle.kts || {
+            echo "::error::Yanlis surum adi: stable-quality-rc7 bekleniyor"
+            exit 1
+          }
+          echo "GameLingo kaynak surumu dogrulandi: 201 / 10.42.7-stable-quality-rc7"
           ls kaynak/ps5
 
       - name: chiaki-ng indir
@@ -171,14 +216,28 @@ jobs:
         shell: bash
         run: |
           set -e
-          ZIP=$(git log --name-only --pretty=format: -n 50 \
-                | grep -iE '\.zip$' | grep -iE 'lingoplay|altyazi' | head -n 1 || true)
-          if [ -z "$ZIP" ] || [ ! -f "$ZIP" ]; then
-            ZIP=$(ls -t *.zip 2>/dev/null | head -n 1)
+          echo "Beklenen 201 kaynagi: $SOURCE_ZIP"
+          if [ ! -f "$SOURCE_ZIP" ]; then
+            echo "::error::GameLingo201.zip bulunamadi. Dosyayi repo kokune yukleyin."
+            exit 1
           fi
-          echo "Kaynak: $ZIP"
+          printf '%s  %s\n' "$SOURCE_SHA256" "$SOURCE_ZIP" | sha256sum -c -
+          unzip -tq "$SOURCE_ZIP" >/dev/null
           rm -rf kaynak && mkdir kaynak
-          unzip -q "$ZIP" -d kaynak
+          unzip -q "$SOURCE_ZIP" -d kaynak
+          if [ ! -f kaynak/app/build.gradle.kts ]; then
+            echo "::error::ZIP icinde app/build.gradle.kts eksik"
+            exit 1
+          fi
+          grep -Eq '^[[:space:]]*versionCode[[:space:]]*=[[:space:]]*201[[:space:]]*$' kaynak/app/build.gradle.kts || {
+            echo "::error::Yanlis surum: versionCode 201 degil"
+            exit 1
+          }
+          grep -Eq '^[[:space:]]*versionName[[:space:]]*=[[:space:]]*"10[.]42[.]7-stable-quality-rc7"[[:space:]]*$' kaynak/app/build.gradle.kts || {
+            echo "::error::Yanlis surum adi: stable-quality-rc7 bekleniyor"
+            exit 1
+          }
+          echo "GameLingo kaynak surumu dogrulandi: 201 / 10.42.7-stable-quality-rc7"
           ls kaynak/pc
 
       - uses: actions/setup-python@v5
