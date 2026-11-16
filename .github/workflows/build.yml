@@ -5,8 +5,8 @@ on:
   workflow_dispatch:
 
 env:
-  SOURCE_ZIP: GameLingo203_Kalite_Duzeltildi.zip
-  SOURCE_SHA256: 64f6334549bf0755471e6f6d36ab68903dbcfd7e4d489be683b802e701d381ac
+  SOURCE_ZIP: GameLingo204_Kaynak.zip
+  SOURCE_SHA256: bec8022cf8286eee1db3120b870d944786a8436d74da3c551b8eedaefaa02be1
 
 # Dört iş birbirinden bağımsız: biri hata verse diğerleri yine çıktı üretir.
 
@@ -24,9 +24,9 @@ jobs:
         shell: bash
         run: |
           set -e
-          echo "Beklenen 203 kaynagi: $SOURCE_ZIP"
+          echo "Beklenen 204 kaynagi: $SOURCE_ZIP"
           if [ ! -f "$SOURCE_ZIP" ]; then
-            echo "::error::GameLingo203_Kalite_Duzeltildi.zip bulunamadi. Dosyayi repo kokune yukleyin."
+            echo "::error::GameLingo204_Kaynak.zip bulunamadi. Dosyayi repo kokune yukleyin."
             exit 1
           fi
           printf '%s  %s\n' "$SOURCE_SHA256" "$SOURCE_ZIP" | sha256sum -c -
@@ -37,19 +37,19 @@ jobs:
             echo "::error::ZIP icinde app/build.gradle.kts eksik"
             exit 1
           fi
-          grep -Eq '^[[:space:]]*versionCode[[:space:]]*=[[:space:]]*203[[:space:]]*$' kaynak/app/build.gradle.kts || {
-            echo "::error::Yanlis surum: versionCode 203 degil"
+          grep -Eq '^[[:space:]]*versionCode[[:space:]]*=[[:space:]]*204[[:space:]]*$' kaynak/app/build.gradle.kts || {
+            echo "::error::Yanlis surum: versionCode 204 degil"
             exit 1
           }
-          grep -Eq '^[[:space:]]*versionName[[:space:]]*=[[:space:]]*"10[.]42[.]7-quality-rc9"[[:space:]]*$' kaynak/app/build.gradle.kts || {
-            echo "::error::Yanlis surum adi: quality-rc9 bekleniyor"
+          grep -Eq '^[[:space:]]*versionName[[:space:]]*=[[:space:]]*"10[.]42[.]7-quality-rc10"[[:space:]]*$' kaynak/app/build.gradle.kts || {
+            echo "::error::Yanlis surum adi: quality-rc10 bekleniyor"
             exit 1
           }
           grep -q 'applicationIdSuffix = ".benchmark"' kaynak/app/build.gradle.kts || {
-            echo "::error::203 kalite uygulamasi eski 201'i ezmemeli"
+            echo "::error::204 kalite uygulamasi eski 201'i ezmemeli"
             exit 1
           }
-          echo "GameLingo kaynak surumu dogrulandi: 203 / 10.42.7-quality-rc9"
+          echo "GameLingo kaynak surumu dogrulandi: 204 / 10.42.7-quality-rc10"
           ls kaynak
 
       - uses: actions/setup-java@v5
@@ -86,9 +86,9 @@ jobs:
         shell: bash
         run: |
           set -e
-          echo "Beklenen 203 kaynagi: $SOURCE_ZIP"
+          echo "Beklenen 204 kaynagi: $SOURCE_ZIP"
           if [ ! -f "$SOURCE_ZIP" ]; then
-            echo "::error::GameLingo203_Kalite_Duzeltildi.zip bulunamadi. Dosyayi repo kokune yukleyin."
+            echo "::error::GameLingo204_Kaynak.zip bulunamadi. Dosyayi repo kokune yukleyin."
             exit 1
           fi
           printf '%s  %s\n' "$SOURCE_SHA256" "$SOURCE_ZIP" | sha256sum -c -
@@ -99,19 +99,19 @@ jobs:
             echo "::error::ZIP icinde app/build.gradle.kts eksik"
             exit 1
           fi
-          grep -Eq '^[[:space:]]*versionCode[[:space:]]*=[[:space:]]*203[[:space:]]*$' kaynak/app/build.gradle.kts || {
-            echo "::error::Yanlis surum: versionCode 203 degil"
+          grep -Eq '^[[:space:]]*versionCode[[:space:]]*=[[:space:]]*204[[:space:]]*$' kaynak/app/build.gradle.kts || {
+            echo "::error::Yanlis surum: versionCode 204 degil"
             exit 1
           }
-          grep -Eq '^[[:space:]]*versionName[[:space:]]*=[[:space:]]*"10[.]42[.]7-quality-rc9"[[:space:]]*$' kaynak/app/build.gradle.kts || {
-            echo "::error::Yanlis surum adi: quality-rc9 bekleniyor"
+          grep -Eq '^[[:space:]]*versionName[[:space:]]*=[[:space:]]*"10[.]42[.]7-quality-rc10"[[:space:]]*$' kaynak/app/build.gradle.kts || {
+            echo "::error::Yanlis surum adi: quality-rc10 bekleniyor"
             exit 1
           }
           grep -q 'applicationIdSuffix = ".benchmark"' kaynak/app/build.gradle.kts || {
-            echo "::error::203 kalite uygulamasi eski 201'i ezmemeli"
+            echo "::error::204 kalite uygulamasi eski 201'i ezmemeli"
             exit 1
           }
-          echo "GameLingo kaynak surumu dogrulandi: 203 / 10.42.7-quality-rc9"
+          echo "GameLingo kaynak surumu dogrulandi: 204 / 10.42.7-quality-rc10"
           ls kaynak/tv
 
       - uses: actions/setup-java@v5
@@ -135,8 +135,11 @@ jobs:
 
   # --------------------------------------------- PS5 APK (GameLingo PS5)
   # Bu is, kaynak ZIP icinde ps5/yama.py varsa derlenebilir.
+  # PS5 yama kaynagi bu arsivde bulunmuyor; desteksiz isi hata verdirme.
+  # Gerekli kaynak eklendiginde yeniden etkinlestirin.
   ps5:
     name: PS5 APK
+    if: ${{ false }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -147,9 +150,9 @@ jobs:
         shell: bash
         run: |
           set -e
-          echo "Beklenen 203 kaynagi: $SOURCE_ZIP"
+          echo "Beklenen 204 kaynagi: $SOURCE_ZIP"
           if [ ! -f "$SOURCE_ZIP" ]; then
-            echo "::error::GameLingo203_Kalite_Duzeltildi.zip bulunamadi. Dosyayi repo kokune yukleyin."
+            echo "::error::GameLingo204_Kaynak.zip bulunamadi. Dosyayi repo kokune yukleyin."
             exit 1
           fi
           printf '%s  %s\n' "$SOURCE_SHA256" "$SOURCE_ZIP" | sha256sum -c -
@@ -160,19 +163,19 @@ jobs:
             echo "::error::ZIP icinde app/build.gradle.kts eksik"
             exit 1
           fi
-          grep -Eq '^[[:space:]]*versionCode[[:space:]]*=[[:space:]]*203[[:space:]]*$' kaynak/app/build.gradle.kts || {
-            echo "::error::Yanlis surum: versionCode 203 degil"
+          grep -Eq '^[[:space:]]*versionCode[[:space:]]*=[[:space:]]*204[[:space:]]*$' kaynak/app/build.gradle.kts || {
+            echo "::error::Yanlis surum: versionCode 204 degil"
             exit 1
           }
-          grep -Eq '^[[:space:]]*versionName[[:space:]]*=[[:space:]]*"10[.]42[.]7-quality-rc9"[[:space:]]*$' kaynak/app/build.gradle.kts || {
-            echo "::error::Yanlis surum adi: quality-rc9 bekleniyor"
+          grep -Eq '^[[:space:]]*versionName[[:space:]]*=[[:space:]]*"10[.]42[.]7-quality-rc10"[[:space:]]*$' kaynak/app/build.gradle.kts || {
+            echo "::error::Yanlis surum adi: quality-rc10 bekleniyor"
             exit 1
           }
           grep -q 'applicationIdSuffix = ".benchmark"' kaynak/app/build.gradle.kts || {
-            echo "::error::203 kalite uygulamasi eski 201'i ezmemeli"
+            echo "::error::204 kalite uygulamasi eski 201'i ezmemeli"
             exit 1
           }
-          echo "GameLingo kaynak surumu dogrulandi: 203 / 10.42.7-quality-rc9"
+          echo "GameLingo kaynak surumu dogrulandi: 204 / 10.42.7-quality-rc10"
           ls kaynak/ps5
 
       - name: chiaki-ng indir
@@ -228,9 +231,9 @@ jobs:
         shell: bash
         run: |
           set -e
-          echo "Beklenen 203 kaynagi: $SOURCE_ZIP"
+          echo "Beklenen 204 kaynagi: $SOURCE_ZIP"
           if [ ! -f "$SOURCE_ZIP" ]; then
-            echo "::error::GameLingo203_Kalite_Duzeltildi.zip bulunamadi. Dosyayi repo kokune yukleyin."
+            echo "::error::GameLingo204_Kaynak.zip bulunamadi. Dosyayi repo kokune yukleyin."
             exit 1
           fi
           printf '%s  %s\n' "$SOURCE_SHA256" "$SOURCE_ZIP" | sha256sum -c -
@@ -241,19 +244,19 @@ jobs:
             echo "::error::ZIP icinde app/build.gradle.kts eksik"
             exit 1
           fi
-          grep -Eq '^[[:space:]]*versionCode[[:space:]]*=[[:space:]]*203[[:space:]]*$' kaynak/app/build.gradle.kts || {
-            echo "::error::Yanlis surum: versionCode 203 degil"
+          grep -Eq '^[[:space:]]*versionCode[[:space:]]*=[[:space:]]*204[[:space:]]*$' kaynak/app/build.gradle.kts || {
+            echo "::error::Yanlis surum: versionCode 204 degil"
             exit 1
           }
-          grep -Eq '^[[:space:]]*versionName[[:space:]]*=[[:space:]]*"10[.]42[.]7-quality-rc9"[[:space:]]*$' kaynak/app/build.gradle.kts || {
-            echo "::error::Yanlis surum adi: quality-rc9 bekleniyor"
+          grep -Eq '^[[:space:]]*versionName[[:space:]]*=[[:space:]]*"10[.]42[.]7-quality-rc10"[[:space:]]*$' kaynak/app/build.gradle.kts || {
+            echo "::error::Yanlis surum adi: quality-rc10 bekleniyor"
             exit 1
           }
           grep -q 'applicationIdSuffix = ".benchmark"' kaynak/app/build.gradle.kts || {
-            echo "::error::203 kalite uygulamasi eski 201'i ezmemeli"
+            echo "::error::204 kalite uygulamasi eski 201'i ezmemeli"
             exit 1
           }
-          echo "GameLingo kaynak surumu dogrulandi: 203 / 10.42.7-quality-rc9"
+          echo "GameLingo kaynak surumu dogrulandi: 204 / 10.42.7-quality-rc10"
           ls kaynak/pc
 
       - uses: actions/setup-python@v5
@@ -281,4 +284,3 @@ jobs:
           path: dist/paket/en_tr.argosmodel
           compression-level: 0
           if-no-files-found: warn
-          
