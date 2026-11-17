@@ -104,12 +104,29 @@ for forbidden in ('engines += SimpleLiveTranslation.Engine("OPUS-MT")',
                   'OfflineFix.lookupUser(source)'):
     if forbidden in code: raise RuntimeError(f"Forbidden live path persists: {forbidden}")
 
+# Removed engines are also disabled in settings and not initialized.
+remove_block("CaptureService.kt",
+    '        firefox = if (prefs.firefoxMotoru) FirefoxCeviri(this).also {',
+    '        prefs.opusMtEnabled = false')
+update("CaptureService.kt",
+    '        prefs.opusMtEnabled = false\n        opusMt = if',
+    '        prefs.firefoxMotoru = false\n        firefox?.birak()\n        firefox = null\n        prefs.opusMtEnabled = false\n        opusMt = if')
+update("CaptureService.kt",
+    'withTimeoutOrNull(1800L) { GoogleCeviri.cevir(text) }',
+    'withTimeoutOrNull(1800L) { GoogleCeviri.cevir(text, kullanHafiza = false) }')
+
 # Restore functions remain for backwards compatibility with other modules,
 # but their Turkish replacements no longer run in natural live output.
 # UI clearly disables OPUS selection instead of silently ignoring the switch.
 update("MainActivity.kt",
+    '        cbFirefox.isChecked = prefs.firefoxMotoru',
+    '        cbFirefox.isChecked = false\n        cbFirefox.isEnabled = false\n        cbFirefox.text = "Firefox (canlı doğal çeviride kapalı)"\n        prefs.firefoxMotoru = false')
+update("MainActivity.kt",
+    '        prefs.firefoxMotoru = cbFirefox.isChecked',
+    '        prefs.firefoxMotoru = false')
+update("MainActivity.kt",
     '        cbOpus.isChecked = prefs.opusMtEnabled',
-    '        cbOpus.isChecked = false\n        cbOpus.isEnabled = false\n        prefs.opusMtEnabled = false')
+    '        cbOpus.isChecked = false\n        cbOpus.isEnabled = false\n        cbOpus.text = "OPUS-MT (canlı doğal çeviride kapalı)"\n        prefs.opusMtEnabled = false')
 update("MainActivity.kt",
     '        prefs.opusMtEnabled = cbOpus.isChecked && OpusModelPack.isInstalled(this)',
     '        prefs.opusMtEnabled = false')
