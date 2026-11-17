@@ -128,7 +128,8 @@ object NaturalLiveQuality202 {
         if (source.count { it == '?' } >= 1 &&
             deepL.contains('?') && !alternative.contains('?')) return false
         // A visibly more conversational alternative is required. No forced edits.
-        return registerScore(source, alternative) >= registerScore(source, deepL) + 2
+        return registerScore(source, alternative) >= 2 &&
+            registerScore(source, alternative) >= registerScore(source, deepL) + 2
     }
 }
 '''
