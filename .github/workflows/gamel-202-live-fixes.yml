@@ -25,8 +25,9 @@ jobs:
           sed -i 's/versionCode = 202/versionCode = 206/' build-source/app/build.gradle.kts
           sed -i 's/versionName = "10.42.9-simplified"/versionName = "10.42.9-simplified-fix2"/' build-source/app/build.gradle.kts
           keytool -list -v -keystore build-source/app/debug.keystore -storepass android -alias androiddebugkey | grep -F 'AB:01:65:42:97:AC:81:6A:22:E6:2C:57:E2:08:E6:65:5B:BA:6D:E7:A8:6C:17:0A:09:BF:38:14:D0:5C:C0:0A'
-          cp ci/patch-202-live.py build-source/patch-202-live.py
-          python3 build-source/patch-202-live.py
+          mkdir -p build-source/ci
+          cp ci/patch-202-live.py build-source/ci/patch-202-live.py
+          python3 build-source/ci/patch-202-live.py
           test -f build-source/app/src/test/java/com/example/altyazi/GameLingo202LiveFixTest.kt
           grep -q 'coverSource = coverMode' build-source/app/src/main/java/com/example/altyazi/CaptureService.kt
           grep -q 'SimpleLiveTranslation.Engine("DeepL")' build-source/app/src/main/java/com/example/altyazi/CaptureService.kt
