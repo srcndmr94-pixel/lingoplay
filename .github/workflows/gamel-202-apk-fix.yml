@@ -1,0 +1,47 @@
+name: GameLingo-202-Sade APK duzeltme derlemesi
+on:
+  push:
+    branches: [gamel-202-apk-fix-20261117]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  apk:
+    name: GameLingo 202 telefon APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v5
+      - name: APK'nin gercek 202 kaynagini dogrula
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "ee9c5e91314abdc90e85054c8d4961cba4159595e88be771542cec54ed204afa  GameLingo-202-Guncellenmis-Tam-Kaynak.zip" | sha256sum -c -
+          unzip -tq GameLingo-202-Guncellenmis-Tam-Kaynak.zip
+          mkdir build-source
+          unzip -q GameLingo-202-Guncellenmis-Tam-Kaynak.zip -d build-source
+          test -f build-source/app/build.gradle.kts
+          test -f build-source/app/debug.keystore
+          grep -q 'applicationId = "com.example.altyazi"' build-source/app/build.gradle.kts
+          grep -q 'versionCode = 202' build-source/app/build.gradle.kts
+          sed -i 's/versionCode = 202/versionCode = 205/' build-source/app/build.gradle.kts
+          sed -i 's/versionName = "10.42.9-simplified"/versionName = "10.42.9-simplified-fix"/' build-source/app/build.gradle.kts
+          keytool -list -v -keystore build-source/app/debug.keystore -storepass android -alias androiddebugkey | grep -F 'AB:01:65:42:97:AC:81:6A:22:E6:2C:57:E2:08:E6:65:5B:BA:6D:E7:A8:6C:17:0A:09:BF:38:14:D0:5C:C0:0A'
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 8.9
+      - name: Android APK'yi derle
+        working-directory: build-source
+        run: gradle :app:assembleDebug --no-daemon --stacktrace
+      - name: APK'yi kaydet
+        uses: actions/upload-artifact@v4
+        with:
+          name: GameLingo-202-Sade-Duzeltilmis-APK
+          path: build-source/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
