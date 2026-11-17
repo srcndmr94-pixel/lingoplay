@@ -1,7 +1,7 @@
-name: GameLingo 202 Startup Fix5 APK
+name: GameLingo 202 Natural Translation Fix6 APK
 on:
   push:
-    branches: [gamel-202-startup-fix5-20261117]
+    branches: [gamel-202-natural-fix6-20261117]
   workflow_dispatch:
 permissions:
   contents: read
@@ -22,8 +22,8 @@ jobs:
           test -f build-source/app/debug.keystore
           grep -q 'applicationId = "com.example.altyazi"' build-source/app/build.gradle.kts
           grep -q 'versionCode = 202' build-source/app/build.gradle.kts
-          sed -i 's/versionCode = 202/versionCode = 209/' build-source/app/build.gradle.kts
-          sed -i 's/versionName = "10.42.9-simplified"/versionName = "10.42.9-simplified-fix5"/' build-source/app/build.gradle.kts
+          sed -i 's/versionCode = 202/versionCode = 210/' build-source/app/build.gradle.kts
+          sed -i 's/versionName = "10.42.9-simplified"/versionName = "10.42.9-natural-fix6"/' build-source/app/build.gradle.kts
           keytool -list -v -keystore build-source/app/debug.keystore -storepass android -alias androiddebugkey | grep -F 'AB:01:65:42:97:AC:81:6A:22:E6:2C:57:E2:08:E6:65:5B:BA:6D:E7:A8:6C:17:0A:09:BF:38:14:D0:5C:C0:0A'
           mkdir -p build-source/ci
           cp ci/patch-202-live.py build-source/ci/patch-202-live.py
@@ -34,12 +34,17 @@ jobs:
           python3 build-source/ci/patch-ui-fix4.py
           cp ci/patch-startup-fix5.py build-source/ci/patch-startup-fix5.py
           python3 build-source/ci/patch-startup-fix5.py
+          cp ci/patch-natural-fix6.py build-source/ci/patch-natural-fix6.py
+          python3 build-source/ci/patch-natural-fix6.py
           test -f build-source/app/src/test/java/com/example/altyazi/GameLingo202LiveFixTest.kt
           grep -q 'coverSource = coverMode' build-source/app/src/main/java/com/example/altyazi/CaptureService.kt
           grep -q 'SimpleLiveTranslation.Engine("DeepL")' build-source/app/src/main/java/com/example/altyazi/CaptureService.kt
-          grep -q 'SimpleLiveTranslation.Engine("OPUS-MT")' build-source/app/src/main/java/com/example/altyazi/CaptureService.kt
           grep -q 'SimpleLiveTranslation.Engine("Google")' build-source/app/src/main/java/com/example/altyazi/CaptureService.kt
-          grep -q 'SimpleLiveTranslation.Engine("Firefox")' build-source/app/src/main/java/com/example/altyazi/CaptureService.kt
+          ! grep -q 'engines += SimpleLiveTranslation.Engine("OPUS-MT")' build-source/app/src/main/java/com/example/altyazi/CaptureService.kt
+          ! grep -q 'engines += SimpleLiveTranslation.Engine("Firefox")' build-source/app/src/main/java/com/example/altyazi/CaptureService.kt
+          ! grep -q 'engines += SimpleLiveTranslation.Engine("ML Kit")' build-source/app/src/main/java/com/example/altyazi/CaptureService.kt
+          ! grep -q 'LiveSubtitleRepair202.verifiedTranslation' build-source/app/src/main/java/com/example/altyazi/CaptureService.kt
+          grep -q 'val finalBody = result.text.trim()' build-source/app/src/main/java/com/example/altyazi/CaptureService.kt
       - uses: actions/setup-java@v5
         with:
           distribution: temurin
@@ -47,15 +52,15 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: 8.9
-      - name: Fix2 Fix3 Fix4 Fix5 regresyon testleri
+      - name: Doğal canlı çeviri regresyon testleri
         working-directory: build-source
-        run: gradle :app:testDebugUnitTest --tests "com.example.altyazi.GameLingo202LiveFixTest" --tests "com.example.altyazi.GameLingo202QualityFix3Test" --tests "com.example.altyazi.GameLingo202UiNoiseFix4Test" --tests "com.example.altyazi.GameLingo202Fix5Test" --no-daemon --stacktrace
+        run: gradle :app:testDebugUnitTest --tests "com.example.altyazi.GameLingo202LiveFixTest" --tests "com.example.altyazi.GameLingo202UiNoiseFix4Test" --tests "com.example.altyazi.GameLingo202NaturalFix6Test" --no-daemon --stacktrace
       - name: Orijinal kimlikle APK derle
         working-directory: build-source
         run: gradle :app:assembleDebug --no-daemon --stacktrace
       - name: APK cikti
         uses: actions/upload-artifact@v4
         with:
-          name: GameLingo-202-Sade-Fix5-APK
+          name: GameLingo-202-Sade-Natural-Fix6-APK
           path: build-source/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
