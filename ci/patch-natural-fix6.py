@@ -148,9 +148,24 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class GameLingo202NaturalFix6Test {
-    @Test fun engineOrderContainsOnlyNaturalOnlineEngines() {
-        val code = listOf("DeepL", "Google")
-        assertEquals(listOf("DeepL", "Google"), code)
+    @Test fun onlyUseSecondEngineWhenFirstFails() = kotlinx.coroutines.runBlocking {
+        val tried = mutableListOf<String>()
+        val engines = listOf(
+            SimpleLiveTranslation.Engine("DeepL") { _, _ ->
+                tried.add("DeepL")
+                "Yo! Crackheads! Woo!"
+            },
+            SimpleLiveTranslation.Engine("Google") { _, _ ->
+                tried.add("Google")
+                "Hey! Keşler! Vay!"
+            }
+        )
+        val result = SimpleLiveTranslation.translate(
+            "Yo! Crackheads! Woo!", "scene", engines,
+            valid = { source, target -> NaturalLiveQuality202.isUsable(source, target) }
+        )
+        assertEquals("Google", result?.engine)
+        assertEquals(listOf("DeepL", "Google"), tried)
     }
     @Test fun noOneWordCollapseOfMultiPartSubtitle() {
         assertFalse(NaturalLiveQuality202.isUsable("Yo! Crackheads! Woo!", "Çatlaklar!"))
