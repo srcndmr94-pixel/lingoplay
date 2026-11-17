@@ -60,7 +60,7 @@ quality=r'''package com.example.altyazi
 object NaturalLiveQuality202 {
     private val sourceWords = Regex("""\p{L}+""")
     private val informalSource = Regex(
-        """(?i)\b(?:yo|bruh|bro|dude|ain['’]?t|gonna|wanna|tryna|y['’]?all|what['’]?s\s+up|fuck(?:ed|ing)?|shit|crackheads?|damn|hell|ya\s+know)\b"""
+        """(?i)\b(?:yo|bruh|bro|dude|ain['’]?t|don['’]?t|gonna|wanna|tryna|y['’]?all|what['’]?s\s+up|fuck(?:ed|ing)?|shit|crackheads?|damn|hell|ya\s+know|you\s+know)\b"""
     )
     private val strongSource = Regex(
         """(?i)\b(?:fuck(?:ed|ing)?|shit|motherfucker|asshole|bitch)\b"""
