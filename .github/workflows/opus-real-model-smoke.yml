@@ -1,0 +1,83 @@
+name: GameLingo OPUS-MT real model smoke test
+on:
+  push:
+    paths:
+      - .github/workflows/opus-real-model-smoke.yml
+  workflow_dispatch:
+permissions:
+  actions: read
+  contents: read
+jobs:
+  real-opus-inference:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Download true GameLingo model weights and inspect metadata
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p model-artifact model
+          gh run download 43623726533 --repo srcndmr94-pixel/lingoplay --name GameLingo-OPUS-MT-en-tr-model --dir model-artifact
+          find model-artifact -maxdepth 2 -type f -printf '%P %s bytes\n'
+          INNER="$(find model-artifact -type f -name '*OPUS*model*.zip' -print -quit)"
+          test -n "$INNER"
+          unzip -t "$INNER" >/dev/null
+          unzip -q "$INNER" -d model
+          for required in encoder_model.onnx decoder_model.onnx source.spm target.spm vocab.json model_info.json; do test -s "model/$required"; done
+          ls -lh model/
+      - name: Install CPU reference ONNX and SentencePiece
+        run: python -m pip install --quiet "numpy==1.26.4" "onnxruntime==1.20.1" "sentencepiece==0.2.0"
+      - name: Run real model inference on three dialogue lines
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json,time,numpy as np,onnxruntime as ort,sentencepiece as spm
+          from pathlib import Path
+          root=Path("model")
+          info=json.loads((root/"model_info.json").read_text())
+          vocab=json.loads((root/"vocab.json").read_text())
+          print("MODEL_INFO",info,flush=True)
+          print("VOCAB_SIZE",len(vocab),flush=True)
+          src=spm.SentencePieceProcessor(model_file=str(root/"source.spm"))
+          tgt=spm.SentencePieceProcessor(model_file=str(root/"target.spm"))
+          assert len(vocab)>1000 and src.get_piece_size()>1000 and tgt.get_piece_size()>1000
+          start=int(info["decoder_start_token_id"]); eos=int(info["eos_token_id"])
+          enc=ort.InferenceSession(str(root/"encoder_model.onnx"),providers=["CPUExecutionProvider"])
+          dec=ort.InferenceSession(str(root/"decoder_model.onnx"),providers=["CPUExecutionProvider"])
+          print("ENC_INPUTS",[(x.name,x.shape,x.type) for x in enc.get_inputs()],flush=True)
+          print("ENC_OUTPUTS",[x.name for x in enc.get_outputs()],flush=True)
+          print("DEC_INPUTS",[(x.name,x.shape,x.type) for x in dec.get_inputs()],flush=True)
+          print("DEC_OUTPUTS",[x.name for x in dec.get_outputs()],flush=True)
+          reverse={i:p for p,i in vocab.items()}
+          for sentence in ["Looks like it.","What the fuck is going on here?","I got Boobie's bricks."]:
+            t0=time.monotonic()
+            pieces=src.encode(sentence,out_type=str)
+            ids=np.array([[vocab.get(p,vocab.get("<unk>",0)) for p in pieces]+[eos]],dtype=np.int64)
+            mask=np.ones_like(ids)
+            ei={}
+            for x in enc.get_inputs():
+              if x.name=="input_ids": ei[x.name]=ids
+              elif x.name=="attention_mask": ei[x.name]=mask
+              else: raise RuntimeError("Unknown encoder input "+x.name)
+            hidden=enc.run(None,ei)[0]
+            output=[start]
+            for i in range(64):
+              di={}
+              for x in dec.get_inputs():
+                if x.name in ("input_ids","decoder_input_ids"): di[x.name]=np.array([output],dtype=np.int64)
+                elif x.name in ("encoder_hidden_states","encoder_outputs"): di[x.name]=hidden
+                elif x.name in ("encoder_attention_mask","attention_mask"): di[x.name]=mask
+                else: raise RuntimeError("Unknown decoder input "+x.name)
+              logits=dec.run(None,di)[0]
+              output.append(int(np.argmax(logits[0,-1,:])))
+              if output[-1]==eos: break
+            translation="".join(reverse.get(i,"") for i in output if i not in (start,eos,int(info["pad_token_id"])) and not reverse.get(i,"").startswith("<")).replace("▁"," ").strip()
+            print("RESULT",json.dumps({"en":sentence,"tr":translation,"ms_cpu":round((time.monotonic()-t0)*1000),"tokens":len(output)},ensure_ascii=False),flush=True)
+            assert translation and translation!=sentence
+          PY
