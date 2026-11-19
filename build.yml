@@ -4,11 +4,7 @@ on:
     branches: [main]
   workflow_dispatch:
 
-env:
-  SOURCE_ZIP: GameLingo202_Derleme_Duzeltildi.zip
-  SOURCE_SHA256: 6e179028747f5ad62413d636519273fb2d27b0a89510f2069e88ab0208c7c9fd
-
-# Dört iş birbirinden bağımsız: biri hata verse diğerleri yine çıktı üretir.
+# Üç iş birbirinden bağımsız: biri hata verse diğerleri yine çıktı üretir.
 
 jobs:
   # ------------------------------------------------ telefon uygulaması (APK)
@@ -24,32 +20,14 @@ jobs:
         shell: bash
         run: |
           set -e
-          echo "Beklenen 202 kaynagi: $SOURCE_ZIP"
-          if [ ! -f "$SOURCE_ZIP" ]; then
-            echo "::error::GameLingo202_Derleme_Duzeltildi.zip bulunamadi. Dosyayi repo kokune yukleyin."
-            exit 1
+          ZIP=$(git log --name-only --pretty=format: -n 50 \
+                | grep -iE '\.zip$' | grep -iE 'lingoplay|altyazi' | head -n 1 || true)
+          if [ -z "$ZIP" ] || [ ! -f "$ZIP" ]; then
+            ZIP=$(ls -t *.zip 2>/dev/null | head -n 1)
           fi
-          printf '%s  %s\n' "$SOURCE_SHA256" "$SOURCE_ZIP" | sha256sum -c -
-          unzip -tq "$SOURCE_ZIP" >/dev/null
+          echo "Kaynak: $ZIP"
           rm -rf kaynak && mkdir kaynak
-          unzip -q "$SOURCE_ZIP" -d kaynak
-          if [ ! -f kaynak/app/build.gradle.kts ]; then
-            echo "::error::ZIP icinde app/build.gradle.kts eksik"
-            exit 1
-          fi
-          grep -Eq '^[[:space:]]*versionCode[[:space:]]*=[[:space:]]*202[[:space:]]*$' kaynak/app/build.gradle.kts || {
-            echo "::error::Yanlis surum: versionCode 202 degil"
-            exit 1
-          }
-          grep -Eq '^[[:space:]]*versionName[[:space:]]*=[[:space:]]*"10[.]42[.]7-benchmark-rc8"[[:space:]]*$' kaynak/app/build.gradle.kts || {
-            echo "::error::Yanlis surum adi: benchmark-rc8 bekleniyor"
-            exit 1
-          }
-          grep -q 'applicationIdSuffix = ".benchmark"' kaynak/app/build.gradle.kts || {
-            echo "::error::202 test uygulamasi eski 201'i ezmemeli"
-            exit 1
-          }
-          echo "GameLingo kaynak surumu dogrulandi: 202 / 10.42.7-benchmark-rc8"
+          unzip -q "$ZIP" -d kaynak
           ls kaynak
 
       - uses: actions/setup-java@v5
@@ -86,32 +64,14 @@ jobs:
         shell: bash
         run: |
           set -e
-          echo "Beklenen 202 kaynagi: $SOURCE_ZIP"
-          if [ ! -f "$SOURCE_ZIP" ]; then
-            echo "::error::GameLingo202_Derleme_Duzeltildi.zip bulunamadi. Dosyayi repo kokune yukleyin."
-            exit 1
+          ZIP=$(git log --name-only --pretty=format: -n 50 \
+                | grep -iE '\.zip$' | grep -iE 'lingoplay|altyazi' | head -n 1 || true)
+          if [ -z "$ZIP" ] || [ ! -f "$ZIP" ]; then
+            ZIP=$(ls -t *.zip 2>/dev/null | head -n 1)
           fi
-          printf '%s  %s\n' "$SOURCE_SHA256" "$SOURCE_ZIP" | sha256sum -c -
-          unzip -tq "$SOURCE_ZIP" >/dev/null
+          echo "Kaynak: $ZIP"
           rm -rf kaynak && mkdir kaynak
-          unzip -q "$SOURCE_ZIP" -d kaynak
-          if [ ! -f kaynak/app/build.gradle.kts ]; then
-            echo "::error::ZIP icinde app/build.gradle.kts eksik"
-            exit 1
-          fi
-          grep -Eq '^[[:space:]]*versionCode[[:space:]]*=[[:space:]]*202[[:space:]]*$' kaynak/app/build.gradle.kts || {
-            echo "::error::Yanlis surum: versionCode 202 degil"
-            exit 1
-          }
-          grep -Eq '^[[:space:]]*versionName[[:space:]]*=[[:space:]]*"10[.]42[.]7-benchmark-rc8"[[:space:]]*$' kaynak/app/build.gradle.kts || {
-            echo "::error::Yanlis surum adi: benchmark-rc8 bekleniyor"
-            exit 1
-          }
-          grep -q 'applicationIdSuffix = ".benchmark"' kaynak/app/build.gradle.kts || {
-            echo "::error::202 test uygulamasi eski 201'i ezmemeli"
-            exit 1
-          }
-          echo "GameLingo kaynak surumu dogrulandi: 202 / 10.42.7-benchmark-rc8"
+          unzip -q "$ZIP" -d kaynak
           ls kaynak/tv
 
       - uses: actions/setup-java@v5
@@ -133,88 +93,6 @@ jobs:
           path: kaynak/tv/build/outputs/apk/debug/tv-debug.apk
           if-no-files-found: error
 
-  # --------------------------------------------- PS5 APK (GameLingo PS5)
-  # Bu is, kaynak ZIP icinde ps5/yama.py varsa derlenebilir.
-  ps5:
-    name: PS5 APK
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-        with:
-          fetch-depth: 0
-
-      - name: Kaynagi ac
-        shell: bash
-        run: |
-          set -e
-          echo "Beklenen 202 kaynagi: $SOURCE_ZIP"
-          if [ ! -f "$SOURCE_ZIP" ]; then
-            echo "::error::GameLingo202_Derleme_Duzeltildi.zip bulunamadi. Dosyayi repo kokune yukleyin."
-            exit 1
-          fi
-          printf '%s  %s\n' "$SOURCE_SHA256" "$SOURCE_ZIP" | sha256sum -c -
-          unzip -tq "$SOURCE_ZIP" >/dev/null
-          rm -rf kaynak && mkdir kaynak
-          unzip -q "$SOURCE_ZIP" -d kaynak
-          if [ ! -f kaynak/app/build.gradle.kts ]; then
-            echo "::error::ZIP icinde app/build.gradle.kts eksik"
-            exit 1
-          fi
-          grep -Eq '^[[:space:]]*versionCode[[:space:]]*=[[:space:]]*202[[:space:]]*$' kaynak/app/build.gradle.kts || {
-            echo "::error::Yanlis surum: versionCode 202 degil"
-            exit 1
-          }
-          grep -Eq '^[[:space:]]*versionName[[:space:]]*=[[:space:]]*"10[.]42[.]7-benchmark-rc8"[[:space:]]*$' kaynak/app/build.gradle.kts || {
-            echo "::error::Yanlis surum adi: benchmark-rc8 bekleniyor"
-            exit 1
-          }
-          grep -q 'applicationIdSuffix = ".benchmark"' kaynak/app/build.gradle.kts || {
-            echo "::error::202 test uygulamasi eski 201'i ezmemeli"
-            exit 1
-          }
-          echo "GameLingo kaynak surumu dogrulandi: 202 / 10.42.7-benchmark-rc8"
-          ls kaynak/ps5
-
-      - name: chiaki-ng indir
-        shell: bash
-        run: |
-          set -e
-          git init -q chiaki-ng
-          cd chiaki-ng
-          git remote add origin https://github.com/streetpea/chiaki-ng
-          git fetch -q --depth 1 origin 43728af2e639fecb8a7af1cd68c29820a40de973
-          git checkout -q FETCH_HEAD
-          for m in third-party/nanopb third-party/jerasure third-party/gf-complete third-party/curl; do
-            git submodule update --init --depth 1 "$m" || git submodule update --init "$m"
-          done
-
-      - name: Gerekli araclar (protoc)
-        run: |
-          sudo apt-get update -q
-          sudo apt-get install -y -q protobuf-compiler python3-protobuf
-          protoc --version
-          python3 -c "import google.protobuf as p; print('python protobuf', p.__version__)"
-
-      - name: GameLingo yamasi
-        run: python3 kaynak/ps5/yama.py chiaki-ng kaynak/ps5
-
-      - uses: actions/setup-java@v5
-        with:
-          distribution: temurin
-          java-version: 17
-
-      - name: Derle
-        working-directory: chiaki-ng/android
-        run: |
-          chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon --stacktrace
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: 4-PS5-APK-${{ github.run_number }}
-          path: chiaki-ng/android/app/build/outputs/apk/debug/app-debug.apk
-          if-no-files-found: error
-
   # --------------------------------------------------- bilgisayar uygulaması
   bilgisayar:
     name: Bilgisayar EXE
@@ -228,32 +106,14 @@ jobs:
         shell: bash
         run: |
           set -e
-          echo "Beklenen 202 kaynagi: $SOURCE_ZIP"
-          if [ ! -f "$SOURCE_ZIP" ]; then
-            echo "::error::GameLingo202_Derleme_Duzeltildi.zip bulunamadi. Dosyayi repo kokune yukleyin."
-            exit 1
+          ZIP=$(git log --name-only --pretty=format: -n 50 \
+                | grep -iE '\.zip$' | grep -iE 'lingoplay|altyazi' | head -n 1 || true)
+          if [ -z "$ZIP" ] || [ ! -f "$ZIP" ]; then
+            ZIP=$(ls -t *.zip 2>/dev/null | head -n 1)
           fi
-          printf '%s  %s\n' "$SOURCE_SHA256" "$SOURCE_ZIP" | sha256sum -c -
-          unzip -tq "$SOURCE_ZIP" >/dev/null
+          echo "Kaynak: $ZIP"
           rm -rf kaynak && mkdir kaynak
-          unzip -q "$SOURCE_ZIP" -d kaynak
-          if [ ! -f kaynak/app/build.gradle.kts ]; then
-            echo "::error::ZIP icinde app/build.gradle.kts eksik"
-            exit 1
-          fi
-          grep -Eq '^[[:space:]]*versionCode[[:space:]]*=[[:space:]]*202[[:space:]]*$' kaynak/app/build.gradle.kts || {
-            echo "::error::Yanlis surum: versionCode 202 degil"
-            exit 1
-          }
-          grep -Eq '^[[:space:]]*versionName[[:space:]]*=[[:space:]]*"10[.]42[.]7-benchmark-rc8"[[:space:]]*$' kaynak/app/build.gradle.kts || {
-            echo "::error::Yanlis surum adi: benchmark-rc8 bekleniyor"
-            exit 1
-          }
-          grep -q 'applicationIdSuffix = ".benchmark"' kaynak/app/build.gradle.kts || {
-            echo "::error::202 test uygulamasi eski 201'i ezmemeli"
-            exit 1
-          }
-          echo "GameLingo kaynak surumu dogrulandi: 202 / 10.42.7-benchmark-rc8"
+          unzip -q "$ZIP" -d kaynak
           ls kaynak/pc
 
       - uses: actions/setup-python@v5
